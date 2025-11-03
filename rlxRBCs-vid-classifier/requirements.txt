@@ -1,0 +1,8 @@
+# Initial draft requirements
+
+torch>=2.0.0
+torchvision
+pytorchvideo
+pandas
+tqdm
+opencv-python
