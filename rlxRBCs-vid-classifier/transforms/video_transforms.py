@@ -6,6 +6,7 @@ from pytorchvideo.transforms import (
 )
 from torchvision.transforms import Compose, Lambda
 import torch
+from config import cfg
 
 def train_transform():
     """
@@ -14,15 +15,18 @@ def train_transform():
     Applies random spatial augmentations and normalization to improve
     model generalization. Temporal subsampling keeps clips lightweight.
     """
+
+    train_cfg = cfg.train_transforms
+
     return Compose([
-        # Uniformly sample 8 frames from the full clip
-        UniformTemporalSubsample(8),
+        # Uniformly sample n frames from the full clip
+        UniformTemporalSubsample(cfg.input_frames),
 
-        # Randomly resize the shorter video side between 128 and 160 pixels
-        RandomShortSideScale(min_size=128, max_size=160),
+        # Randomly resize the shorter video side between n and m pixels
+        RandomShortSideScale(min_size=train_cfg.short_side_min, max_size=train_cfg.short_side_max),
 
-        # Randomly crop a 112×112 spatial region
-        RandomCropVideo(112),
+        # Randomly crop a n x n spatial region
+        RandomCropVideo(train_cfg.crop_size),
 
         # Randomly flip the clip horizontally (mirrors left↔right)
         RandomHorizontalFlipVideo(),
@@ -44,9 +48,12 @@ def val_transform():
     Keeps deterministic preprocessing (no random crops or flips) so results
     are stable and directly comparable between epochs.
     """
+
+    val_cfg = cfg.val_transforms
+
     return Compose([
         # Uniformly sample 8 frames from the full clip
-        UniformTemporalSubsample(8),
+        UniformTemporalSubsample(cfg.input_frames),
 
         # Normalize pixel intensities and channels as in training
         Lambda(lambda x: x / 255.0),
