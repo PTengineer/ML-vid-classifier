@@ -16,7 +16,8 @@ from pathlib import Path
 import torch
 
 # =============================
-# Default Configuration
+# Default Configuration 
+# (dictionary structure)
 # =============================
 
 DEFAULTS = {
@@ -33,12 +34,14 @@ DEFAULTS = {
     "output_dir": Path("output/checkpoints"),  #TODO consider output/checkpoints
     "log_dir": Path("logs"),    #TODO log implementation
 
-    # Model, used by video_transforms.py and model.py   #TODO or actual filename for model.py
+    # Model, used by video_transforms.py and model.py
     "num_classes": 4,
     "model_name": "rlxClassDetect_small",
     "input_frames": 8,
     "input_size": 112,
     "pretrained": False,
+    "ptv_module": "slowfast",
+    "model_depth": 50,
 
     # Training, used by train.py
     "batch_size": 4,
@@ -83,6 +86,7 @@ def get_config():   #TODO be sure these aren't duplicated in train.py
     parser.add_argument("--log_dir", type=Path, help="Where to store logs.")
     parser.add_argument("--clip_duration", type=float, default=5.0, help="Max duration (in seconds) of sampled video clip.")
     parser.add_argument("--random_clip", action="store_true", help="Enable random start times for video clips.")
+    parser.add_argument("--ptv_module", type=str, choices=["slowfast", "resnet"], help="Select between slowfast and resnet modules.")
 
     # Parse known args safely
     args, _ = parser.parse_known_args()
