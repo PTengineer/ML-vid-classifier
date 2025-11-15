@@ -9,13 +9,13 @@ Usage:
     model = build_model(cfg)
 """
 
-import torch
+#import torch
 import torch.nn as nn
 import pytorchvideo.models.resnet as resnet
 import pytorchvideo.models.slowfast as slowfast
 from config import cfg
 
-def build_model(cfg):
+def build_model():
     """
     This constructs a video classification model and allows 
     a selection between modules.
@@ -23,8 +23,7 @@ def build_model(cfg):
     Supports both ResNet3D and SlowFast. We initially opt for SlowFast.
 
     Args:
-            cfg: Configuration object from config.py
-
+            
     Returns:
             torch.nn.Module: Initialized model ready for training/inference  
     """
@@ -64,8 +63,5 @@ def build_model(cfg):
         print(f"[INFO] Loading pretrained weights for {ptv_module}...")
         # Placeholder — customize depending on where pretrained models are stored
         # model.load_state_dict(torch.load(cfg.pretrained_path))
-
-    # Move to appropriate device
-    model = model.to(cfg.device)
 
     return model

@@ -36,7 +36,7 @@ DEFAULTS = {
 
     # Model, used by video_transforms.py and model.py
     "num_classes": 4,
-    "model_name": "rlxClassDetect_small",
+    "model_name": "rlxClassDetect_base1",   # base1 being more descriptive of an R50 depth, small might be 16 to 34
     "input_frames": 8,
     "input_size": 112,
     "pretrained": False,
