@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./rlxRBCs-vid-classifier/models"
+    ]
+}

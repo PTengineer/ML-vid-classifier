@@ -25,7 +25,7 @@ DEFAULTS = {
     "clip_duration": 5.0,
     "random_clip": True,
     "seed": 42, 
-    "device": "cuda" if torch.cuda.is_available() else "cpu",   #TODO correct if logic is duplicated
+    "device": "cuda",   
 
     # Paths, used by video_dataset.py and train.py
     "data_root": Path("data/videos"),
