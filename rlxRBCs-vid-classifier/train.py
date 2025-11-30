@@ -130,12 +130,14 @@ def main() -> None:
             model, train_loader, criterion, optimizer, device
         )
 
-        val_acc = evaluate(model, val_loader, device)
+        val_loss, val_acc = evaluate(model, val_loader, criterion, device)
+        
         scheduler.step()
 
         print(
             f"Epoch {epoch+1}/{cfg.epochs} | "
             f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.3f} | "
+            f"Val Loss: {val_loss:.3f}"
             f"Val Acc: {val_acc:.3f}"
         )
 
