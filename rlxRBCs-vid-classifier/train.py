@@ -11,6 +11,7 @@ from config import cfg
 from datasets.video_dataset import CSVDataset
 from transforms.video_transforms import train_transform, val_transform
 from model import build_model
+from labels import load_class_labels
 from evaluate import evaluate
 
 
@@ -105,7 +106,8 @@ def main() -> None:
     # --------------------------
     # Model, loss, optimizer
     # --------------------------
-    model = build_model(num_classes=cfg.num_classes).to(device)
+    classes = load_class_labels(cfg.train_csv)
+    model = build_model(num_classes=len(classes)).to(device)
     criterion = nn.CrossEntropyLoss()
 
     optimizer = optim.SGD(
