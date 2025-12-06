@@ -11,7 +11,7 @@ from config import cfg
 from datasets.video_dataset import CSVDataset
 from transforms.video_transforms import train_transform, val_transform
 from model import build_model
-from labels import load_class_labels
+from labels import load_label_mapping
 from evaluate import evaluate
 
 
@@ -106,7 +106,7 @@ def main() -> None:
     # --------------------------
     # Model, loss, optimizer
     # --------------------------
-    classes = load_class_labels(cfg.train_csv)
+    classes = load_label_mapping(cfg.train_csv)
     model = build_model(num_classes=len(classes)).to(device)
     criterion = nn.CrossEntropyLoss()
 

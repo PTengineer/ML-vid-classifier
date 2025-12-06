@@ -22,7 +22,7 @@ it identifies the image’s location on disk, retrieves the corresponding label 
 """
 
 class RBCsDataset(Dataset):
-    def __init__(self, csv_file, video_dir, transform=None, clip_duration=None, random_clip=None):
+    def __init__(self, csv_file, video_dir, transform=None, clip_duration=None, random_clip=None, class_to_idx=None):
         """
         Args:
             csv_file (str or Path): Path to CSV file with columns ['filename', 'label']
@@ -31,15 +31,16 @@ class RBCsDataset(Dataset):
             clip_duration (float): Maximum duration (in seconds) of the video clip to sample
             random_clip (bool): If True, sample a random start time within the video duration
         """
+        
+        assert class_to_idx is not None, "Dataset requires class_to_idx mapping."
+
+        self.class_to_idx = class_to_idx
+        
         self.annotations = pd.read_csv(csv_file)
         self.video_dir = video_dir
         self.transform = transform
         self.clip_duration = clip_duration if clip_duration is not None else cfg.clip_duration
         self.random_clip = random_clip if random_clip is not None else cfg.random_clip
-
-        # Map class names to integer indices
-        self.classes = sorted(self.annotations['label'].unique())
-        self.class_to_idx = {cls_name: idx for idx, cls_name in enumerate(self.classes)}
 
     def __len__(self):
         return len(self.annotations)

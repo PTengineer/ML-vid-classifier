@@ -26,7 +26,7 @@ from config import cfg
 from model import build_model
 from transforms.video_transforms import val_transform
 from project_logger import log          # centralized print/log module TODO implement logging and correct handling of class mapping
-from labels import load_class_labels        # TODO not yet existing class label module, may opt for simple implementation unless writing a new module is very easy
+from labels import load_class_labels    
 # --------------------------
 
 # PyTorchVideo (import inside function where decoding occurs)
@@ -159,6 +159,21 @@ def main():
     # Path to model weights
     weights_path = os.path.join(cfg.output_dir, "best_model.pth")
 
+    # Define class mapping
+    class_map = None  # Example: Default to None to trigger loading from CSV
+    
+    if class_map is None:
+        # Load labels dynamically from the source CSV file
+        # ASSUMES load_class_labels(path) returns a sorted dictionary {0: "Mild", 1: "Moderate", ...}
+        print(f"Loading class labels from: {cfg.train_csv}")
+        classes = load_class_labels(cfg.train_csv)
+    else:
+        # Use the predefined hardcoded map if provided
+        classes = class_map
+        
+    if len(classes) != cfg.num_classes:
+        raise ValueError(f"Loaded classes count ({len(classes)}) does not match cfg.num_classes ({cfg.num_classes}).")
+
     # Load transforms + model
     try:
         model = load_model_for_inference(weights_path, cfg.num_classes, device)
@@ -167,8 +182,8 @@ def main():
         log.error("Failed to load model or transforms.")
         return
 
-    # Example video list (replace with CLI or API input later)
-    test_videos = cfg.inference_samples
+    # Example video list (TODO replace with CLI or API input later)
+    test_videos = cfg.inference_samples #inference_samples doesn't exist yet
 
     log.info("----- Running Inference -----")
     for video_path in test_videos:
