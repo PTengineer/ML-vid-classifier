@@ -19,18 +19,23 @@ from typing import Dict, Any, Union
 import torch
 from torch import nn
 
+import platform
+
 # --------------------------
 # Project-Specific Imports
 # --------------------------
 from config import cfg
 from model import build_model
 from transforms.video_transforms import val_transform
-from project_logger import log          # centralized print/log module TODO implement logging and correct handling of class mapping
+import logger
 from labels import load_class_labels    
+
 # --------------------------
-
-# PyTorchVideo (import inside function where decoding occurs)
-
+# Centralized logging
+# --------------------------
+LOG_NAME = f'{platform.node()}-rlxRBCrecognition'
+LOG_FILE = 'inference_log.txt'
+log = logger.get_logger(LOG_NAME, LOG_FILE)
 
 # ---------------------------------------------------------------------
 # Model Loading
@@ -196,9 +201,9 @@ def main():
                 class_map=load_class_labels(cfg.train_csv)
             )
             log.info("-" * 40)
-            log.success(f"Video:       {result['video']}")
-            log.success(f"Prediction:  {result['prediction']}")
-            log.success(f"Confidence:  {result['confidence'] * 100:.2f}%")
+            log.info(f"Video:       {result['video']}")
+            log.info(f"Prediction:  {result['prediction']}")
+            log.info(f"Confidence:  {result['confidence'] * 100:.2f}%")
 
         except FileNotFoundError as e:
             log.warning(f"Skipping video: {e}")
