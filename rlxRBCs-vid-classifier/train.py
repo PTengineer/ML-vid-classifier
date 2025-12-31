@@ -14,6 +14,8 @@ from model import build_model
 from labels import load_label_mapping
 from evaluate import evaluate
 
+import platform
+import logger
 
 # ---------------------------------------------------------
 # Training Loop
@@ -65,6 +67,12 @@ def train_one_epoch(
 
     return avg_loss, avg_acc
 
+# --------------------------
+# Centralized logging
+# --------------------------
+LOG_NAME = f'{platform.node()}-rlxRBCrecognition'
+LOG_FILE = 'train_log.txt'
+log = logger.get_logger(LOG_NAME, LOG_FILE)
 
 # ---------------------------------------------------------
 # Main training routine
@@ -136,7 +144,7 @@ def main() -> None:
         
         scheduler.step()
 
-        print(
+        log.info(
             f"Epoch {epoch+1}/{cfg.epochs} | "
             f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.3f} | "
             f"Val Loss: {val_loss:.3f}"
@@ -151,7 +159,8 @@ def main() -> None:
                 os.path.join(cfg.output_dir, "best_model.pth"),
             )
 
-    print(f"Training complete. Best validation accuracy: {best_val_acc:.3f}")
+    log.info(f"Training finished. Best validation accuracy: {best_val_acc:.3f}")
+    print(f"Training finished, details written to log file. Best validation accuracy: {best_val_acc:.3f}")
 
 
 if __name__ == "__main__":

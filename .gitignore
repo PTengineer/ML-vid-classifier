@@ -1,0 +1,6 @@
+# Copilot GitHub
+.github/*
+
+# Python
+__pycache__
+*.pyc
