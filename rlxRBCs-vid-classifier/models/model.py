@@ -34,15 +34,15 @@ def build_model():
 
     if ptv_module.lower() == "slowfast":
         model = slowfast.create_slowfast(
-            input_channels=3,
+            input_channels=(3,),
             model_depth=cfg.model_depth,
             model_num_class=cfg.num_classes,
             slowfast_channel_reduction_ratio=8,
-            slowfast_conv_channel_ratio=2,
+            slowfast_conv_channel_fusion_ratio=2,
             dropout_rate=0.5,
             norm=nn.BatchNorm3d,
             activation=nn.ReLU,
-            head_activation=None,
+            head_activation=None, # type: ignore
         )
     elif ptv_module.lower() == "resnet":
         model = resnet.create_resnet(
@@ -51,9 +51,9 @@ def build_model():
             model_num_class=cfg.num_classes,
             norm=nn.BatchNorm3d,
             activation=nn.ReLU,
-            stem_conv_kernel_size=(3, 7, 7),
-            stem_conv_stride=(1, 2, 2),
-            pool=nn.AvgPool3d,
+            stem_conv_kernel_size=(3, 7, 7), # type: ignore
+            stem_conv_stride=(1, 2, 2), # type: ignore
+            head_pool=nn.AvgPool3d,
         )
     else:
         raise ValueError(f"Unsupported ptv_module type: {ptv_module}")

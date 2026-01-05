@@ -12,7 +12,7 @@ def load_label_mapping(csv_path: Union[str, Path]) -> Dict[str, int]:
     df = pd.read_csv(csv_path)
     unique_labels: List[str] = sorted(df["label"].unique())
 
-    label_to_idx: Dict[int, str] = {label: idx for idx, label in enumerate(unique_labels)}
+    label_to_idx: Dict[str, int] = {label: idx for idx, label in enumerate(unique_labels)}
 
     return label_to_idx
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Dict, Any, Union
+from typing import Callable, Dict, Any, Union
 
 import torch
 from torch import nn
@@ -54,7 +54,7 @@ def load_model_for_inference(
     log.info(f"Loading model weights from: {weights_path}")
 
     # Build model architecture using your modular builder
-    model = build_model(num_classes=num_classes)
+    model = build_model()
 
     # Load weights with device-safe mapping
     try:
@@ -82,7 +82,7 @@ def predict_video_artifact(
     model: nn.Module,
     video_path: str,
     device: torch.device,
-    transform_fn: callable,
+    transform_fn: Callable[..., Any],
     class_map: Dict[int, str]
 ) -> Dict[str, Union[str, float]]:
     """
@@ -138,7 +138,8 @@ def predict_video_artifact(
         probabilities = torch.softmax(logits, dim=1)
         conf, idx = torch.max(probabilities, 1)
 
-    prediction = class_map.get(idx.item(), "Unknown")
+    idx_int = int(idx.item())
+    prediction = class_map.get(idx_int, "Unknown")
     confidence = float(conf.item())
 
     end_time = time.time()

@@ -1,10 +1,10 @@
+from ast import Tuple
 from pytorchvideo.transforms import (
     RandomShortSideScale,
-    RandomCropVideo,
-    RandomHorizontalFlipVideo,
+    RandomResizedCrop,
     UniformTemporalSubsample,
 )
-from torchvision.transforms import Compose, Lambda
+from torchvision.transforms import Compose, Lambda, RandomHorizontalFlip
 import torch
 from config import cfg
 
@@ -26,10 +26,10 @@ def train_transform():
         RandomShortSideScale(min_size=train_cfg.short_side_min, max_size=train_cfg.short_side_max),
 
         # Randomly crop a n x n spatial region
-        RandomCropVideo(train_cfg.crop_size),
+        RandomResizedCrop(target_height=cfg.train_transforms.crop_size, target_width=cfg.train_transforms.crop_size, scale=(0.7, 1.0), aspect_ratio=(0.75, 1.3333333333333333)),
 
         # Randomly flip the clip horizontally (mirrors left↔right)
-        RandomHorizontalFlipVideo(),
+        RandomHorizontalFlip(),
 
         # Scale raw pixel values from [0, 255] to [0, 1]
         Lambda(lambda x: x / 255.0),

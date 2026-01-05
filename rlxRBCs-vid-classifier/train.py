@@ -8,11 +8,11 @@ from tqdm import tqdm
 from typing import Tuple
 
 from config import cfg
-from datasets.video_dataset import CSVDataset
+from datasets.video_dataset import RBCsDataset
 from transforms.video_transforms import train_transform, val_transform
 from model import build_model
 from labels import load_label_mapping
-from evaluate import evaluate
+from .evaluate import evaluate
 
 import platform
 import logger
@@ -85,15 +85,15 @@ def main() -> None:
     # --------------------------
     # Dataset & DataLoaders
     # --------------------------
-    train_set = CSVDataset(
-        csv_path=cfg.train_csv,
-        root_dir=cfg.data_root,
+    train_set = RBCsDataset(
+        csv_file=cfg.train_csv,
+        video_dir=cfg.data_root,
         transform=train_transform(),
     )
 
-    val_set = CSVDataset(
-        csv_path=cfg.val_csv,
-        root_dir=cfg.data_root,
+    val_set = RBCsDataset(
+        csv_file=cfg.val_csv,
+        video_dir=cfg.data_root,
         transform=val_transform(),
     )
 
@@ -114,8 +114,8 @@ def main() -> None:
     # --------------------------
     # Model, loss, optimizer
     # --------------------------
-    classes = load_label_mapping(cfg.train_csv)
-    model = build_model(num_classes=len(classes)).to(device)
+    #classes = load_label_mapping(cfg.train_csv) # Replaced to use class_to_idx in dataset
+    model = build_model().to(device)
     criterion = nn.CrossEntropyLoss()
 
     optimizer = optim.SGD(

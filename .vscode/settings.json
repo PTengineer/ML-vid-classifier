@@ -1,5 +1,10 @@
 {
+    "python.experiments.optOutFrom": [
+        "pythonTerminalEnvVarActivation"
+    ],
     "python.analysis.extraPaths": [
         "./rlxRBCs-vid-classifier/models"
-    ]
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "standard"
 }
