@@ -63,6 +63,8 @@ DEFAULTS = {
         "short_side_min": 128,
         "crop_size": 112,
     },
+    # Inference samples: list of paths or videos to run inference on (empty by default)
+    "inference_samples": [],
 
 }
 

@@ -121,10 +121,12 @@ def predict_video_artifact(
             raise ValueError("PyTorchVideo failed to decode video.")
 
         # Apply your validation/production transforms
-        inputs = transform_fn(clip)
+        # transform_fn expects a video tensor (clip["video"]) and returns a tensor
+        video_tensor = clip["video"]
+        processed = transform_fn(video_tensor)
 
-        # PyTorchVideo convention expects ['video']
-        tensor = inputs["video"].unsqueeze(0).to(device)
+        # Batch dimension
+        tensor = processed.unsqueeze(0).to(device)
 
     except Exception as e:
         log.error(f"Video decoding error: {e}")
@@ -163,20 +165,12 @@ def main():
     log.info(f"Using device: {device}")
 
     # Path to model weights
-    weights_path = os.path.join(cfg.output_dir, "best_model.pth")
+    weights_path = os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth")
 
-    # Define class mapping
-    class_map = None  # Example: Default to None to trigger loading from CSV
-    
-    if class_map is None:
-        # Load labels dynamically from the source CSV file
-        # ASSUMES load_class_labels(path) returns a sorted dictionary {0: "Mild", 1: "Moderate", ...}
-        print(f"Loading class labels from: {cfg.train_csv}")
-        classes = load_class_labels(cfg.train_csv)
-    else:
-        # Use the predefined hardcoded map if provided
-        classes = class_map
-        
+    # Load labels from the authoritative training CSV
+    print(f"Loading class labels from: {cfg.train_csv}")
+    classes = load_class_labels(cfg.train_csv)
+
     if len(classes) != cfg.num_classes:
         raise ValueError(f"Loaded classes count ({len(classes)}) does not match cfg.num_classes ({cfg.num_classes}).")
 
@@ -189,7 +183,10 @@ def main():
         return
 
     # Example video list (TODO replace with CLI or API input later)
-    test_videos = cfg.inference_samples #inference_samples doesn't exist yet
+    test_videos = getattr(cfg, "inference_samples", [])
+    if not test_videos:
+        log.warning("No inference samples configured in cfg.inference_samples; exiting.")
+        return
 
     log.info("----- Running Inference -----")
     for video_path in test_videos:
@@ -199,7 +196,7 @@ def main():
                 video_path=video_path,
                 device=device,
                 transform_fn=transform_fn,
-                class_map=load_class_labels(cfg.train_csv)
+                class_map=classes,
             )
             log.info("-" * 40)
             log.info(f"Video:       {result['video']}")

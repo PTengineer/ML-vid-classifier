@@ -9,9 +9,10 @@ from typing import Tuple
 
 from config import cfg
 from datasets.video_dataset import RBCsDataset
+from labels import load_label_mapping
 from transforms.video_transforms import train_transform, val_transform
 from model import build_model
-from labels import load_label_mapping
+
 from .evaluate import evaluate
 
 import platform
@@ -82,19 +83,27 @@ def main() -> None:
     device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
     os.makedirs(cfg.output_dir, exist_ok=True)
 
+    # Ensure model-specific directory exists for checkpoint saving
+    os.makedirs(os.path.join(cfg.output_dir, cfg.model_name), exist_ok=True)
+
     # --------------------------
     # Dataset & DataLoaders
     # --------------------------
+    # Build authoritative class mapping from the training CSV and pass into datasets
+    class_to_idx = load_label_mapping(cfg.train_csv)
+
     train_set = RBCsDataset(
         csv_file=cfg.train_csv,
         video_dir=cfg.data_root,
         transform=train_transform(),
+        class_to_idx=class_to_idx,
     )
 
     val_set = RBCsDataset(
         csv_file=cfg.val_csv,
         video_dir=cfg.data_root,
         transform=val_transform(),
+        class_to_idx=class_to_idx,
     )
 
     train_loader = DataLoader(
@@ -156,7 +165,7 @@ def main() -> None:
             best_val_acc = val_acc
             torch.save(
                 model.state_dict(),
-                os.path.join(cfg.output_dir, "best_model.pth"),
+                os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth"),
             )
 
     log.info(f"Training finished. Best validation accuracy: {best_val_acc:.3f}")
