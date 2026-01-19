@@ -12,8 +12,7 @@ from datasets.video_dataset import RBCsDataset
 from labels import load_label_mapping
 from transforms.video_transforms import train_transform, val_transform
 from model import build_model
-
-from .evaluate import evaluate
+from validate import evaluate 
 
 import platform
 import logger
