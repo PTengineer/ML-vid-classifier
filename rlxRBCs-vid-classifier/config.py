@@ -13,7 +13,6 @@ Usage:
 
 import argparse
 from pathlib import Path
-import torch
 
 # =============================
 # Default Configuration 
@@ -35,7 +34,7 @@ DEFAULTS = {
     "log_dir": Path("logs"),    #TODO log implementation
 
     # Model, used by video_transforms.py and model.py
-    "num_classes": 4,
+    #"num_classes": 4,  # Moved to train.py to be dynamic based on dataset
     "model_name": "rlxClassDetect_base1",   # base1 being more descriptive of an R50 depth, small might be 16 to 34
     "input_frames": 8,
     "input_size": 112,
@@ -44,13 +43,14 @@ DEFAULTS = {
     "model_depth": 50,
 
     # Training, used by train.py
-    "batch_size": 4,
+    "batch_size": 4,    # Reduced from 8 to 4 to lower memory usage
     "epochs": 10,
     "lr": 1e-3,
     "momentum": 0.9,
     "weight_decay": 1e-4,
     "num_workers": 2,
     "scheduler_tmax": 20,   # Scheduler
+    "acc_steps": 3,         # Gradient accumulation steps
 
     # Augmentation, used by video_transforms.py   #TODO set these to appropriate values based on dataset actual Height Length sizes
     "train_transforms": {

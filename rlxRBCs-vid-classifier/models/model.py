@@ -15,7 +15,7 @@ import pytorchvideo.models.resnet as resnet
 import pytorchvideo.models.slowfast as slowfast
 from config import cfg
 
-def build_model():
+def build_model(num_classes: int = 4) -> nn.Module:
     """
     This constructs a video classification model and allows 
     a selection between modules.
@@ -23,9 +23,11 @@ def build_model():
     Supports both ResNet3D and SlowFast. We initially opt for SlowFast.
 
     Args:
+        num_classes (int): Number of output classes for classification.
+        defaults to 4 for RBC rouleaux classification. Labeled normal, mild, moderate, severe
             
     Returns:
-            torch.nn.Module: Initialized model ready for training/inference  
+        torch.nn.Module: Initialized model ready for training/inference  
     """
 
     model = None
@@ -36,7 +38,7 @@ def build_model():
         model = slowfast.create_slowfast(
             input_channels=(3,),
             model_depth=cfg.model_depth,
-            model_num_class=cfg.num_classes,
+            model_num_class=num_classes,
             slowfast_channel_reduction_ratio=8,
             slowfast_conv_channel_fusion_ratio=2,
             dropout_rate=0.5,
@@ -48,7 +50,7 @@ def build_model():
         model = resnet.create_resnet(
             input_channel=3,
             model_depth=cfg.model_depth,
-            model_num_class=cfg.num_classes,
+            model_num_class=num_classes,
             norm=nn.BatchNorm3d,
             activation=nn.ReLU,
             stem_conv_kernel_size=(3, 7, 7), # type: ignore

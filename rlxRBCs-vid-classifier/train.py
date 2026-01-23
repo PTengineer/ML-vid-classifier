@@ -11,11 +11,26 @@ from config import cfg
 from datasets.video_dataset import RBCsDataset
 from labels import load_label_mapping
 from transforms.video_transforms import train_transform, val_transform
-from model import build_model
+from models.model import build_model
 from validate import evaluate 
 
 import platform
 import logger
+
+import numpy as np
+import random
+
+# ---------------------------------------------------------
+# Reproducability Seeding
+# ---------------------------------------------------------
+def set_seed(seed: int = 101) -> None:
+    """Set random seed for reproducibility across numpy, torch, and python random."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
 
 # ---------------------------------------------------------
 # Training Loop
@@ -46,7 +61,9 @@ def train_one_epoch(
     total_correct = 0
     total_samples = 0
 
-    for videos, labels in tqdm(dataloader, desc="Training", leave=False):
+    accumulation_steps = cfg.acc_steps  # For future use if gradient accumulation is needed
+
+    for i, (videos, labels) in tqdm(dataloader, desc="Training", leave=False):
         videos = videos.to(device)
         labels = labels.to(device)
 
@@ -55,7 +72,12 @@ def train_one_epoch(
         outputs = model(videos)
         loss = criterion(outputs, labels)
         loss.backward()
-        optimizer.step()
+        
+        # Gradient clipping (optional, can help with stability)
+        if (i + 1) % accumulation_steps == 0:
+            nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
+            optimizer.zero_grad()
 
         batch_size = labels.size(0)
         total_loss += loss.item() * batch_size
@@ -74,16 +96,39 @@ LOG_NAME = f'{platform.node()}-rlxRBCrecognition'
 LOG_FILE = 'train_log.txt'
 log = logger.get_logger(LOG_NAME, LOG_FILE)
 
+# --------------------------
+# Configuration Validation
+# --------------------------
+def validate_config() -> None:
+    """Validate configuration before training."""
+    assert cfg.batch_size > 0, "batch_size must be positive"
+    assert cfg.epochs > 0, "epochs must be positive"
+    assert cfg.lr > 0, "learning rate must be positive"
+
+    from pathlib import Path
+    assert Path(cfg.data_root).exists(), f"data_root not found: {cfg.data_root}"
+    assert Path(cfg.train_csv).exists(), f"train_csv not found: {cfg.train_csv}"
+    assert Path(cfg.val_csv).exists(), f"val_csv not found: {cfg.val_csv}"
+
+    if cfg.device == "cuda":
+        assert torch.cuda.is_available(), (
+            "CUDA not available but device='cuda' specified"
+        )
+
 # ---------------------------------------------------------
 # Main training routine
 # ---------------------------------------------------------
 def main() -> None:
+    set_seed(cfg.seed)
+    
     """Entry point for training the rlxClassDetect model."""
     device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
     os.makedirs(cfg.output_dir, exist_ok=True)
 
     # Ensure model-specific directory exists for checkpoint saving
     os.makedirs(os.path.join(cfg.output_dir, cfg.model_name), exist_ok=True)
+
+    validate_config()
 
     # --------------------------
     # Dataset & DataLoaders
@@ -122,8 +167,8 @@ def main() -> None:
     # --------------------------
     # Model, loss, optimizer
     # --------------------------
-    #classes = load_label_mapping(cfg.train_csv) # Replaced to use class_to_idx in dataset
-    model = build_model().to(device)
+    num_classes = len(class_to_idx) # for when a test dataset is used with 2 classes
+    model = build_model(num_classes=num_classes).to(device)
     criterion = nn.CrossEntropyLoss()
 
     optimizer = optim.SGD(
@@ -144,31 +189,46 @@ def main() -> None:
     # Training Loop
     # --------------------------
     for epoch in range(cfg.epochs):
-        train_loss, train_acc = train_one_epoch(
-            model, train_loader, criterion, optimizer, device
-        )
+        try:
+            train_loss, train_acc = train_one_epoch(
+                model, train_loader, criterion, optimizer, device
+            )
+        except RuntimeError as e:
+            log.error(f"Epoch {epoch+1} failed: {e}. Resuming from best checkpoint.")
+            model.load_state_dict(
+                torch.load(os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth"))
+            )
+            continue
 
         val_loss, val_acc = evaluate(model, val_loader, criterion, device)
         
         scheduler.step()
 
         log.info(
-            f"Epoch {epoch+1}/{cfg.epochs} | "
-            f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.3f} | "
-            f"Val Loss: {val_loss:.3f}"
-            f"Val Acc: {val_acc:.3f}"
+            f"Epoch {epoch+1:3d}/{cfg.epochs} | "
+            f"Train Loss: {train_loss:>.4f} | Train Acc: {train_acc:>.4f} | "
+            f"Val Loss: {val_loss:>.4f} | Val Acc: {val_acc:>.4f}"
         )
 
         # Save best model
         if val_acc > best_val_acc:
             best_val_acc = val_acc
+            
+            checkpoint = {
+                "epoch": epoch + 1,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "best_val_accuracy": best_val_acc,
+                "cfg": cfg.__dict__, # Save config for reproducibility
+            }
+            
             torch.save(
-                model.state_dict(),
+                checkpoint,
                 os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth"),
             )
 
-    log.info(f"Training finished. Best validation accuracy: {best_val_acc:.3f}")
-    print(f"Training finished, details written to log file. Best validation accuracy: {best_val_acc:.3f}")
+    log.info(f"Training finished. Best validation accuracy: {best_val_acc:.4f}")
+    print(f"Training finished, details written to log file. Best validation accuracy: {best_val_acc:.4f}")
 
 
 if __name__ == "__main__":
