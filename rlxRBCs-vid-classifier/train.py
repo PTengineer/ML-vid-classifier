@@ -139,7 +139,7 @@ def main() -> None:
     train_set = RBCsDataset(
         csv_file=cfg.train_csv,
         video_dir=cfg.data_root,
-        transform=train_transform(),
+        transform=train_transform(),  # set to test_transform() for overfit testing
         class_to_idx=class_to_idx,
     )
 

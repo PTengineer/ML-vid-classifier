@@ -23,8 +23,8 @@ DEFAULTS = {
     # General, used by video_dataset.py and train.py
     "clip_duration": 5.0,
     "random_clip": True,
-    "seed": 42, 
-    "device": "cuda",   
+    "seed": 42,
+    "device": "cuda",
 
     # Paths, used by video_dataset.py and train.py
     "data_root": Path("data/videos"),
@@ -35,22 +35,22 @@ DEFAULTS = {
 
     # Model, used by video_transforms.py and model.py
     #"num_classes": 4,  # Moved to train.py to be dynamic based on dataset
-    "model_name": "rlxClassDetect_base1",   # base1 being more descriptive of an R50 depth, small might be 16 to 34
+    "model_name": "rlxClassDetect_test0",   # base1 being more descriptive of an R50 depth, small might be 18
     "input_frames": 8,
     "input_size": 112,
     "pretrained": False,
     "ptv_module": "slowfast",
-    "model_depth": 50,
+    "model_depth": 18,  # Small test model depth for slowfast, otherwise set to 50, 101, 152
 
     # Training, used by train.py
-    "batch_size": 4,    # Reduced from 8 to 4 to lower memory usage
+    "batch_size": 6,    # Reduced from 8 to 4 to lower memory usage
     "epochs": 10,
-    "lr": 1e-3,
+    "lr": 1e-4,         # Set for stability
     "momentum": 0.9,
     "weight_decay": 1e-4,
     "num_workers": 2,
     "scheduler_tmax": 20,   # Scheduler
-    "acc_steps": 3,         # Gradient accumulation steps
+    "acc_steps": 2,         # Gradient accumulation steps
 
     # Augmentation, used by video_transforms.py   #TODO set these to appropriate values based on dataset actual Height Length sizes
     "train_transforms": {

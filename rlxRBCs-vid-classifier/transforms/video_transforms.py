@@ -1,10 +1,11 @@
 from ast import Tuple
 from pytorchvideo.transforms import (
+    ConvertUint8ToFloat,
     RandomShortSideScale,
     RandomResizedCrop,
     UniformTemporalSubsample,
 )
-from torchvision.transforms import Compose, Lambda, RandomHorizontalFlip
+from torchvision.transforms import CenterCrop, Compose, Lambda, RandomHorizontalFlip
 import torch
 from config import cfg
 
@@ -54,6 +55,27 @@ def val_transform():
     return Compose([
         # Uniformly sample 8 frames from the full clip
         UniformTemporalSubsample(cfg.input_frames),
+
+        # Normalize pixel intensities and channels as in training
+        Lambda(lambda x: x / 255.0),
+        Lambda(lambda x: (
+            x - torch.tensor([0.45, 0.45, 0.45]).view(3, 1, 1, 1)
+        ) / torch.tensor([0.225, 0.225, 0.225]).view(3, 1, 1, 1)),
+    ])
+
+def test_transform():
+    """
+    Video transform pipeline for overfit test.
+
+    Performs only bare essentials.
+    """
+
+    return Compose([
+        # Uniformly sample 8 frames from the full clip
+        UniformTemporalSubsample(cfg.input_frames),
+
+        # Convert from uint8 [0, 255] to float [0.0, 1.0]
+        ConvertUint8ToFloat(),
 
         # Normalize pixel intensities and channels as in training
         Lambda(lambda x: x / 255.0),
