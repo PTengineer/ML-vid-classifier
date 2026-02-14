@@ -28,7 +28,7 @@ from config import cfg
 from model import build_model
 from transforms.video_transforms import val_transform
 import logger
-from labels import load_class_labels    
+from labels import load_class_labels, load_label_mapping
 
 # --------------------------
 # Centralized logging
@@ -54,7 +54,7 @@ def load_model_for_inference(
     log.info(f"Loading model weights from: {weights_path}")
 
     # Build model architecture using your modular builder
-    model = build_model()
+    model = build_model(num_classes=num_classes)
 
     # Load weights with device-safe mapping
     try:
@@ -159,6 +159,7 @@ def predict_video_artifact(
 # ---------------------------------------------------------------------
 def main():
     """Runs inference on test videos listed in cfg or hardcoded list."""
+    class_to_idx = load_label_mapping(cfg.train_csv)
 
     # Robust device handling: always prefer config.py value
     device = torch.device(cfg.device)
@@ -176,7 +177,8 @@ def main():
 
     # Load transforms + model
     try:
-        model = load_model_for_inference(weights_path, cfg.num_classes, device)
+        num_classes = len(class_to_idx) # for when a test dataset is used with 2 classes
+        model = load_model_for_inference(weights_path, num_classes, device)
         transform_fn = val_transform()
     except Exception:
         log.error("Failed to load model or transforms.")

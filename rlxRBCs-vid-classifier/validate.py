@@ -36,7 +36,7 @@ def evaluate(
     total_samples = 0
 
     # Inference-only mode disables gradient storage for speed/memory
-    with torch.no_grad():
+    with torch.inference_mode():
         for videos, labels in dataloader:
             videos = videos.to(device)
             labels = labels.to(device)
