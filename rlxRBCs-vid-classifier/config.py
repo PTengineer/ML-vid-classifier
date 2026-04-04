@@ -32,6 +32,7 @@ DEFAULTS = {
     "val_csv": Path("data/val_annotations.csv"),
     "output_dir": Path("output/checkpoints"),  #TODO consider output/checkpoints
     "log_dir": Path("logs"),    #TODO log implementation
+    "unprocessed_dir": Path("data/unprocessed"),  # Raw videos before preprocessing
 
     # Model, used by video_transforms.py and model.py
     #"num_classes": 4,  # Moved to train.py to be dynamic based on dataset
@@ -66,6 +67,15 @@ DEFAULTS = {
     # Inference samples: list of paths or videos to run inference on (empty by default)
     "inference_samples": [],
 
+    
+    #TODO these are duplicated in crop_preprocess, consider how to unify or separate concerns better
+    # Crop preprocessing, used by crop_preprocess.py
+    #"crop_config": {
+    #    "canny_threshold_low": 50,
+    #    "canny_threshold_high": 150,
+    #    "margin_px": 2,
+    #    "sample_frames": 10,  # Number of frames to analyze for crop region consensus
+    #},
 }
 
 # =============================
@@ -89,6 +99,16 @@ def get_config():   #TODO be sure these aren't duplicated in train.py
     parser.add_argument("--clip_duration", type=float, default=5.0, help="Max duration (in seconds) of sampled video clip.")
     parser.add_argument("--random_clip", action="store_true", help="Enable random start times for video clips.")
     parser.add_argument("--ptv_module", type=str, choices=["slowfast", "resnet"], help="Select between slowfast and resnet modules.")
+    
+    """ #TODO these are duplicated in crop_preprocess, consider how to unify or separate concerns better
+    # Crop preprocessing arguments
+    parser.add_argument("--input_dir", type=Path, help="Path to unprocessed videos directory.")
+    parser.add_argument("--output_dir_crop", type=Path, help="Path to output cropped videos directory.")
+    parser.add_argument("--canny_threshold_low", type=int, help="Lower threshold for Canny edge detection.")
+    parser.add_argument("--canny_threshold_high", type=int, help="Upper threshold for Canny edge detection.")
+    parser.add_argument("--margin_px", type=int, help="Safety margin (px) around detected content.")
+    parser.add_argument("--sample_every", type=int, default=2, help="Log 1 of every N successful videos.")
+    """
 
     # Parse known args safely
     args, _ = parser.parse_known_args()
@@ -102,6 +122,8 @@ def get_config():   #TODO be sure these aren't duplicated in train.py
     # Ensure directories exist
     config["output_dir"].mkdir(parents=True, exist_ok=True)
     config["log_dir"].mkdir(parents=True, exist_ok=True)
+    config["data_root"].mkdir(parents=True, exist_ok=True)
+    config["unprocessed_dir"].mkdir(parents=True, exist_ok=True)
 
     # Convert to a lightweight namespace
     from types import SimpleNamespace

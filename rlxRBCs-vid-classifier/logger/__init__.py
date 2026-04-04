@@ -9,7 +9,7 @@ def get_logger(name, logfile):
     if log.handlers:
             return log
 
-    file_handler = logging.FileHandler(filename=cfg.log_dir+logfile)
+    file_handler = logging.FileHandler(filename=str(cfg.log_dir / logfile), encoding='utf-8')
     #console_handler = logging.StreamHandler(sys.stdout)
 
     format_str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
