@@ -35,7 +35,7 @@ def detect_crop_region(
     frame: np.ndarray,
     canny_low: int = 50,
     canny_high: int = 150,
-    brightness_threshold: int = 15
+    brightness_threshold: Optional[int] = 3,
 ) -> Tuple[int, int, int, int]:
     """
     Detect the bounding box of video content using brightness analysis with
@@ -60,56 +60,74 @@ def detect_crop_region(
     --------
     Tuple[int, int, int, int]
         Bounding box (x1, y1, x2, y2) of detected content region.
-        Returns full frame (0, 0, width, height) if detection fails.
+        Returns frame reduced by multiplier (0, 0, width, height) if detection fails.
     """
     frame_height, frame_width = frame.shape[:2]
-    
-    # Convert to grayscale for brightness analysis
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    gray = np.asarray(gray, dtype=np.uint8)
-    
-    # Create binary mask: bright pixels above threshold
-    _, binary_mask = cv2.threshold(gray, brightness_threshold, 255, cv2.THRESH_BINARY)
-    
-    # Remove thin artifacts (gradient bars, lines) using morphological opening.
-    # Use horizontal and vertical kernels separately to target bar orientations.
-    VLINE_THICK = 45
-    HLINE_THICK = 5
-    kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (HLINE_THICK, 1))  # Remove horizontal lines
-    kernel_v = cv2.getStructuringElement(cv2.MORPH_RECT, (1, VLINE_THICK))  # Remove vertical lines
-    
-    binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel_h)
-    binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel_v)
-    
-    # Close small gaps within content using morphological closing
-    kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (4, 4))
-    binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel_close)
-    
-    # Find contours in the cleaned binary mask
-    contours, _ = cv2.findContours(binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    if not contours:
-        return (0, 0, frame_width, frame_height)
-    
-    # Select the largest contour (should be the main content region)
-    largest_contour = max(contours, key=cv2.contourArea)
-    x, y, w, h = cv2.boundingRect(largest_contour)
-    
-    x1, y1 = x, y
-    x2, y2 = x + w, y + h
-    
-    # Validate minimum content size constraints
-    content_width: int = x2 - x1
-    content_height: int = y2 - y1
-    min_width: float = frame_width * 0.25
-    min_height: float = frame_height * 0.5
-    
-    # Return full frame if detected region is too small
-    if content_width < min_width or content_height < min_height:
-        return (0, 0, frame_width, frame_height)
-    
-    return (int(x1), int(y1), int(x2), int(y2))
 
+    # Brightness mask: use Otsu if no explicit threshold
+    if brightness_threshold is None:
+        _, bright_mask = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    else:
+        _, bright_mask = cv2.threshold(gray, brightness_threshold, 255, cv2.THRESH_BINARY)
+
+    # Edge mask
+    edges = cv2.Canny(gray, canny_low, canny_high)
+    edges = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)), iterations=1)
+
+    # Combine masks
+    mask = cv2.bitwise_or(bright_mask, edges)
+
+    # Morphological cleaning with kernels scaled to image size
+    HLINE_THICK = max(3, int(frame_width * 0.02))
+    VLINE_THICK = max(3, int(frame_height * 0.02))
+    kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (HLINE_THICK, 1))
+    kernel_v = cv2.getStructuringElement(cv2.MORPH_RECT, (1, VLINE_THICK))
+
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel_h)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel_v)
+
+    # Close gaps and remove small specks
+    k_close = cv2.getStructuringElement(cv2.MORPH_RECT, (max(3, int(frame_width * 0.01)), max(3, int(frame_height * 0.01))))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k_close)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    if contours:
+        largest = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(largest)
+
+        # If largest contour is tiny, try union of all contours
+        if w * h < 0.02 * (frame_width * frame_height):
+            xs, ys = [], []
+            for c in contours:
+                rx, ry, rw, rh = cv2.boundingRect(c)
+                xs += [rx, rx + rw]
+                ys += [ry, ry + rh]
+            if xs and ys:
+                x1, x2 = min(xs), max(xs)
+                y1, y2 = min(ys), max(ys)
+            else:
+                return (0, 0, frame_width, frame_height)
+        else:
+            x1, y1, x2, y2 = x, y, x + w, y + h
+
+        # Minimum-size guard (use more permissive thresholds)
+        if (x2 - x1) < frame_width * 0.15 or (y2 - y1) < frame_height * 0.10:
+            return (0, 0, frame_width, frame_height)
+
+        return finalize_even_coordinates(int(x1), int(y1), int(x2), int(y2))
+
+    # Fallback: projection (useful when morphology removes contours)
+    cols = np.where(mask.mean(axis=0) > 10)[0]
+    rows = np.where(mask.mean(axis=1) > 10)[0]
+    if cols.size and rows.size:
+        x1, x2 = int(cols[0]), int(cols[-1]) + 1
+        y1, y2 = int(rows[0]), int(rows[-1]) + 1
+        return finalize_even_coordinates(x1, y1, x2, y2)
+
+    return (0, 0, frame_width, frame_height)
 
 def finalize_even_coordinates(x1: float, y1: float, x2: float, y2: float) -> Tuple[int, int, int, int]:
     """
@@ -141,6 +159,7 @@ def compute_crop_consensus(
     canny_high: int = 150,
     margin_px: int = 3,
     logger_instance = None,
+    brightness_threshold: Optional[int] = 3,
 ) -> Tuple[int, int, int, int]:
     """
     Analyze multiple video frames to find a consensus cropping region.
@@ -154,7 +173,7 @@ def compute_crop_consensus(
         num_sample_frames: Total frames to sample for analysis.
         canny_low: Lower threshold for Canny edge detection.
         canny_high: Upper threshold for Canny edge detection.
-        margin_px: Pixels to shrink the final box outward for safety.
+        margin_px: Pixels to adjust the final box outward for safety.
         logger_instance: Optional logger for warning messages.
 
     Returns:
@@ -181,10 +200,9 @@ def compute_crop_consensus(
             continue
 
         try:
-            res = detect_crop_region(frame, canny_low, canny_high)
-            # Ensure the detected region is significant
-            if (res[2] - res[0]) > frame_width * 0.25 and \
-               (res[3] - res[1]) > frame_height * 0.45:
+            res = detect_crop_region(frame, canny_low, canny_high, brightness_threshold)
+            # Relax per-frame acceptance so we don't discard legitimate detections
+            if (res[2] - res[0]) > frame_width * 0.20 and (res[3] - res[1]) > frame_height * 0.15:
                 crop_regions.append(res)
         except Exception as e:
             if logger_instance:
@@ -196,9 +214,9 @@ def compute_crop_consensus(
         return 0, 0, frame_width, frame_height
 
     # Compute consensus: Using percentiles for robust boundary detection
-    x1 = int(np.percentile([box[0] for box in crop_regions], 20))  # Lower percentile for left to crop more
+    x1 = int(np.percentile([box[0] for box in crop_regions], 15))  # Lower percentile for left to crop more
     y1 = int(np.median([box[1] for box in crop_regions]))
-    x2 = int(np.percentile([box[2] for box in crop_regions], 80))  # Higher for right
+    x2 = int(np.percentile([box[2] for box in crop_regions], 85))  # Higher for right
     y2 = int(np.median([box[3] for box in crop_regions]))       
 
     # Apply safety margin and ensure coordinates remain within frame bounds
