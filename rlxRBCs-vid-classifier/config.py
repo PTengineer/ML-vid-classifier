@@ -28,7 +28,7 @@ DEFAULTS = {
 
     # Paths, used by video_dataset.py and train.py
     "data_root": Path("data/videos"),
-    "train_csv": Path("data/train_annotations.csv"),
+    "train_csv": Path("data/overfit_test.csv"), # overfit_test.csv | train_annotations.csv
     "val_csv": Path("data/val_annotations.csv"),
     "output_dir": Path("output/checkpoints"),  #TODO consider output/checkpoints
     "log_dir": Path("logs"),    #TODO log implementation

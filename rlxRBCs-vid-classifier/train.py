@@ -10,7 +10,7 @@ from typing import Tuple
 from config import cfg
 from datasets.video_dataset import RBCsDataset
 from labels import load_label_mapping
-from transforms.video_transforms import train_transform, val_transform
+from transforms.video_transforms import train_transform, val_transform, test_transform
 from models.model import build_model
 from validate import evaluate 
 
@@ -139,7 +139,7 @@ def main() -> None:
     train_set = RBCsDataset(
         csv_file=cfg.train_csv,
         video_dir=cfg.data_root,
-        transform=train_transform(),  # set to test_transform() for overfit testing
+        transform=test_transform(),  # set to test_transform() for overfit testing
         class_to_idx=class_to_idx,
     )
 
