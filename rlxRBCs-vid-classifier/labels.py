@@ -9,8 +9,6 @@ def _read_and_validate_csv(csv_path: Union[str, Path], *, filename_col: str, lab
     if not path.exists():
         raise FileNotFoundError(f"CSV not found: {path}")
 
-    df = pd.read_csv(path)
-
     # robust CSV read: trim spaces after delimiters and normalize column names
     df = pd.read_csv(path, skipinitialspace=True)
     df.columns = df.columns.str.strip()

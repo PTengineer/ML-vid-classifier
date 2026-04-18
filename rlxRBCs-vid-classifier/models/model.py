@@ -31,7 +31,7 @@ def build_model(num_classes: int = 4) -> nn.Module:
     """
 
     model = None
-    ptv_module = getattr(cfg, cfg.model_name, "slowfast")  # default fallback
+    ptv_module = getattr(cfg, "ptv_module", "slowfast")  # default fallback
 
 
     if ptv_module.lower() == "slowfast":

@@ -63,8 +63,12 @@ def train_one_epoch(
 
     accumulation_steps = cfg.acc_steps  # For future use if gradient accumulation is needed
 
-    for i, (videos, labels) in tqdm(dataloader, desc="Training", leave=False):
-        videos = videos.to(device)
+    for i, (videos, labels) in enumerate(tqdm(dataloader, desc="Training", leave=False)):
+        if isinstance(videos, list):
+            videos = [v.to(device) for v in videos]
+        else:
+            videos = videos.to(device)
+        
         labels = labels.to(device)
 
         optimizer.zero_grad()
@@ -194,10 +198,16 @@ def main() -> None:
                 model, train_loader, criterion, optimizer, device
             )
         except RuntimeError as e:
-            log.error(f"Epoch {epoch+1} failed: {e}. Resuming from best checkpoint.")
-            model.load_state_dict(
-                torch.load(os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth"))
-            )
+            log.error(f"Epoch {epoch+1} failed: {e}. Attempting to resume from best checkpoint if available.")
+            best_ckpt = os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth")
+            if os.path.exists(best_ckpt):
+                try:
+                    model.load_state_dict(torch.load(best_ckpt))
+                    log.info(f"Loaded checkpoint {best_ckpt}")
+                except Exception as ex:
+                    log.error(f"Failed to load checkpoint {best_ckpt}: {ex}")
+            else:
+                log.warning(f"No checkpoint found at {best_ckpt}; continuing without loading.")
             continue
 
         val_loss, val_acc = evaluate(model, val_loader, criterion, device)

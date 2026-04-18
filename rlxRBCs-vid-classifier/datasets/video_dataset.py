@@ -55,7 +55,9 @@ class RBCsDataset(Dataset):
         else:
             self.class_to_idx = class_to_idx
 
-        self.annotations = pd.read_csv(csv_file)
+        # Read CSV robustly and normalize column names so workers see the same headers
+        self.annotations = pd.read_csv(csv_file, skipinitialspace=True)
+        self.annotations.columns = self.annotations.columns.str.strip()
         self.video_dir = Path(video_dir)
         self.transform = transform
         self.clip_duration = clip_duration if clip_duration is not None else cfg.clip_duration
@@ -87,4 +89,13 @@ class RBCsDataset(Dataset):
         # Apply transform pipeline (e.g. spatial crop, normalization)
         if self.transform:
             video_data = self.transform(video_data)
-        return video_data, label
+
+        # video_data: Tensor (C, T, H, W)
+        if getattr(cfg, "ptv_module", "slowfast").lower() == "slowfast":
+            alpha = getattr(cfg, "slowfast_alpha", 4)  # add this to config (default 4)
+            fast = video_data
+            slow = fast[:, ::alpha, :, :]  # temporal subsample
+            return [slow, fast], label
+        
+        else:
+            return video_data, label

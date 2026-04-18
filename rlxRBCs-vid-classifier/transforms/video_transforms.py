@@ -1,4 +1,14 @@
 from ast import Tuple
+import importlib, sys
+# ModuleNotFoundError suggested shim
+try:
+    importlib.import_module("torchvision.transforms.functional_tensor")
+except ModuleNotFoundError:
+    try:
+        mod = importlib.import_module("torchvision.transforms.functional")
+        sys.modules["torchvision.transforms.functional_tensor"] = mod
+    except ModuleNotFoundError:
+        pass
 from pytorchvideo.transforms import (
     ConvertUint8ToFloat,
     RandomShortSideScale,
@@ -7,79 +17,80 @@ from pytorchvideo.transforms import (
 )
 from torchvision.transforms import CenterCrop, Compose, Lambda, RandomHorizontalFlip
 import torch
+
+import torch.nn.functional as F
 from config import cfg
 
+
+# Top-level helpers (picklable) ------------------------------------------------
+def to_float_div255(x: torch.Tensor) -> torch.Tensor:
+    return x / 255.0
+
+
+def imagenet_normalize(x: torch.Tensor) -> torch.Tensor:
+    mean = torch.tensor([0.45, 0.45, 0.45], device=x.device).view(3, 1, 1, 1)
+    std = torch.tensor([0.225, 0.225, 0.225], device=x.device).view(3, 1, 1, 1)
+    return (x - mean) / std
+
+
+def _resize_spatial(x: torch.Tensor, size: int) -> torch.Tensor:
+    # x: (C, T, H, W) -> permute to (T, C, H, W) for interpolate
+    x_t = x.permute(1, 0, 2, 3)
+    x_t_resized = F.interpolate(x_t, size=(size, size), mode="bilinear", align_corners=False)
+    return x_t_resized.permute(1, 0, 2, 3)
+
+
+def center_crop_to_input(x: torch.Tensor) -> torch.Tensor:
+    size = cfg.input_size
+    if x.ndim != 4:
+        return x
+    C, T, H, W = x.shape
+    if H == size and W == size:
+        return x
+    if H < size or W < size:
+        return _resize_spatial(x, size)
+    top = (H - size) // 2
+    left = (W - size) // 2
+    return x[:, :, top : top + size, left : left + size]
+
+
 def train_transform():
-    """
-    Video transform pipeline used during training.
-
-    Applies random spatial augmentations and normalization to improve
-    model generalization. Temporal subsampling keeps clips lightweight.
-    """
-
+    """Video transform pipeline used during training."""
     train_cfg = cfg.train_transforms
 
     return Compose([
-        # Uniformly sample n frames from the full clip
         UniformTemporalSubsample(cfg.input_frames),
-
-        # Randomly resize the shorter video side between n and m pixels
         RandomShortSideScale(min_size=train_cfg.short_side_min, max_size=train_cfg.short_side_max),
-
-        # Randomly crop a n x n spatial region
-        RandomResizedCrop(target_height=cfg.train_transforms.crop_size, target_width=cfg.train_transforms.crop_size, scale=(0.7, 1.0), aspect_ratio=(0.75, 1.3333333333333333)),
-
-        # Randomly flip the clip horizontally (mirrors left↔right)
+        RandomResizedCrop(
+            target_height=train_cfg.crop_size,
+            target_width=train_cfg.crop_size,
+            scale=(0.7, 1.0),
+            aspect_ratio=(0.75, 1.3333333333333333),
+        ),
         RandomHorizontalFlip(),
-
-        # Scale raw pixel values from [0, 255] to [0, 1]
-        Lambda(lambda x: x / 255.0),
-
-        # Normalize each channel using ImageNet mean/std values
-        Lambda(lambda x: (
-            x - torch.tensor([0.45, 0.45, 0.45]).view(3, 1, 1, 1)
-        ) / torch.tensor([0.225, 0.225, 0.225]).view(3, 1, 1, 1)),
+        Lambda(center_crop_to_input),
+        Lambda(to_float_div255),
+        Lambda(imagenet_normalize),
     ])
 
 
 def val_transform():
-    """
-    Video transform pipeline for validation and inference.
-
-    Keeps deterministic preprocessing (no random crops or flips) so results
-    are stable and directly comparable between epochs.
-    """
-
-    val_cfg = cfg.val_transforms
-
+    """Video transform pipeline for validation and inference (deterministic)."""
     return Compose([
-        # Uniformly sample 8 frames from the full clip
         UniformTemporalSubsample(cfg.input_frames),
-
-        # Normalize pixel intensities and channels as in training
-        Lambda(lambda x: x / 255.0),
-        Lambda(lambda x: (
-            x - torch.tensor([0.45, 0.45, 0.45]).view(3, 1, 1, 1)
-        ) / torch.tensor([0.225, 0.225, 0.225]).view(3, 1, 1, 1)),
+        Lambda(center_crop_to_input),
+        Lambda(to_float_div255),
+        Lambda(imagenet_normalize),
     ])
 
-def test_transform():
-    """
-    Video transform pipeline for overfit test.
 
-    Performs only bare essentials.
-    """
+def test_transform():
+    """Video transform pipeline for overfit testing (minimal + deterministic)."""
 
     return Compose([
-        # Uniformly sample 8 frames from the full clip
         UniformTemporalSubsample(cfg.input_frames),
-
-        # Convert from uint8 [0, 255] to float [0.0, 1.0]
-        ConvertUint8ToFloat(),
-
-        # Normalize pixel intensities and channels as in training
-        Lambda(lambda x: x / 255.0),
-        Lambda(lambda x: (
-            x - torch.tensor([0.45, 0.45, 0.45]).view(3, 1, 1, 1)
-        ) / torch.tensor([0.225, 0.225, 0.225]).view(3, 1, 1, 1)),
+        #ConvertUint8ToFloat(),
+        Lambda(center_crop_to_input),
+        Lambda(to_float_div255),
+        Lambda(imagenet_normalize),
     ])
