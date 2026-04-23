@@ -38,9 +38,10 @@ DEFAULTS = {
     #"num_classes": 4,  # Moved to train.py to be dynamic based on dataset
     "model_name": "rlxClassDetect_test0",   # base1 being more descriptive of an R50 depth, small might be 18
     "input_frames": 8,
-    "input_size": 112,
+    "input_size": 224,   # For overfit test we use minimum, actual training can use 224 or 256 depending on GPU capacity
     "pretrained": False,
     "ptv_module": "slowfast",
+    "slowfast_alpha": 4,  # Temporal stride for slow pathway in SlowFast
     "model_depth": 18,  # Small test model depth for slowfast, otherwise set to 50, 101, 152
 
     # Training, used by train.py
@@ -55,14 +56,14 @@ DEFAULTS = {
 
     # Augmentation, used by video_transforms.py   #TODO set these to appropriate values based on dataset actual Height Length sizes
     "train_transforms": {
-        "short_side_min": 128,
-        "short_side_max": 160,
-        "crop_size": 112,
+        "short_side_min": 224,
+        "short_side_max": 448,
+        "crop_size": 224,
         "horizontal_flip_prob": 0.495,    # 0.5 is already a default value of the function
     },
     "val_transforms": {
-        "short_side_min": 128,
-        "crop_size": 112,
+        "short_side_min": 224,
+        "crop_size": 224,
     },
     # Inference samples: list of paths or videos to run inference on (empty by default)
     "inference_samples": [],

@@ -1,10 +1,21 @@
 {
+    "python.terminal.activateEnvironment": true,
+    "python.useEnvironmentsExtension": true,
     "python.experiments.optOutFrom": [
         "pythonTerminalEnvVarActivation"
     ],
+    "python.defaultInterpreterPath": "D:/vsProjTuts/python/MLlabVenv/Scripts/python.exe",
+    "terminal.integrated.cwd": "${workspaceFolder}/rlxRBCs-vid-classifier",    
     "python.analysis.extraPaths": [
         "./rlxRBCs-vid-classifier/models"
     ],
     "python.analysis.autoImportCompletions": true,
-    "python.analysis.typeCheckingMode": "standard"
+    "python.analysis.typeCheckingMode": "standard",
+    "python-envs.pythonProjects": [
+        {
+            "path": "rlxRBCs-vid-classifier",
+            "envManager": "ms-python.python:venv",
+            "packageManager": "ms-python.python:pip"
+        }
+    ]
 }

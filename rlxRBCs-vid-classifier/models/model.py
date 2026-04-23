@@ -36,7 +36,8 @@ def build_model(num_classes: int = 4) -> nn.Module:
 
     if ptv_module.lower() == "slowfast":
         model = slowfast.create_slowfast(
-            input_channels=(3,),
+            # provide input channels per pathway (slow, fast)
+            input_channels=(3, 3), # type: ignore
             model_depth=cfg.model_depth,
             model_num_class=num_classes,
             slowfast_channel_reduction_ratio=8,
@@ -45,6 +46,7 @@ def build_model(num_classes: int = 4) -> nn.Module:
             norm=nn.BatchNorm3d,
             activation=nn.ReLU,
             head_activation=None, # type: ignore
+            head_pool=nn.AdaptiveAvgPool3d((1, 1, 1)),  # to accomodate overfit test, use adaptive pooling
         )
     elif ptv_module.lower() == "resnet":
         model = resnet.create_resnet(

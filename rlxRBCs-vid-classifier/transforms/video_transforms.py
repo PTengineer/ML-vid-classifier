@@ -24,7 +24,7 @@ from config import cfg
 
 # Top-level helpers (picklable) ------------------------------------------------
 def to_float_div255(x: torch.Tensor) -> torch.Tensor:
-    return x / 255.0
+    return x.float() / 255.0
 
 
 def imagenet_normalize(x: torch.Tensor) -> torch.Tensor:
@@ -71,6 +71,7 @@ def train_transform():
         Lambda(center_crop_to_input),
         Lambda(to_float_div255),
         Lambda(imagenet_normalize),
+        
     ])
 
 
@@ -81,6 +82,7 @@ def val_transform():
         Lambda(center_crop_to_input),
         Lambda(to_float_div255),
         Lambda(imagenet_normalize),
+        
     ])
 
 
@@ -93,4 +95,5 @@ def test_transform():
         Lambda(center_crop_to_input),
         Lambda(to_float_div255),
         Lambda(imagenet_normalize),
+        
     ])

@@ -1,6 +1,7 @@
 ''' Custom dataset for video files '''
 
 import random
+import torch
 from torch.utils.data import Dataset
 from pytorchvideo.data.encoded_video import EncodedVideo
 from config import cfg
@@ -71,31 +72,31 @@ class RBCsDataset(Dataset):
         video_path = str(self.video_dir / row[self.filename_col])
         label = self.class_to_idx[row[self.label_col]]
         
-        # Load video
+        # Load video using PyTorchVideo
         video = EncodedVideo.from_path(video_path)
 
-        # Randomized start time (hybrid feature)
+        # Calculate clip duration and randomized start time
         video_duration = video.duration
         clip_duration = min(self.clip_duration, video_duration)
+        start_time = 0.0
 
         if self.random_clip and video_duration > clip_duration:
             start_time = random.uniform(0, video_duration - clip_duration)
-        else:
-            start_time = 0.0
 
         # Extract clip segment
+        # PyTorchVideo natively returns a tensor of shape (C, T, H, W)
         video_data = video.get_clip(start_sec=start_time, end_sec=start_time + clip_duration)["video"]
         
-        # Apply transform pipeline (e.g. spatial crop, normalization)
+        # Apply spatial/normalization transforms to the (C, T, H, W) tensor
         if self.transform:
             video_data = self.transform(video_data)
 
-        # video_data: Tensor (C, T, H, W)
-        if getattr(cfg, "ptv_module", "slowfast").lower() == "slowfast":
-            alpha = getattr(cfg, "slowfast_alpha", 4)  # add this to config (default 4)
-            fast = video_data
-            slow = fast[:, ::alpha, :, :]  # temporal subsample
-            return [slow, fast], label
+        # --- SlowFast Pathway Packing ---
+        # SlowFast requires a list of two tensors: [slow_pathway, fast_pathway]
+        alpha = getattr(cfg, "slowfast_alpha", 4)  
         
-        else:
-            return video_data, label
+        fast_pathway = video_data
+        # Subsample the temporal dimension (index 1) by a factor of alpha
+        slow_pathway = fast_pathway[:, ::alpha, :, :]  
+        
+        return [slow_pathway, fast_pathway], label
