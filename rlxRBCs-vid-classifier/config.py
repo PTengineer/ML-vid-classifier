@@ -42,7 +42,7 @@ DEFAULTS = {
     "pretrained": False,
     "ptv_module": "slowfast",
     "slowfast_alpha": 4,  # Temporal stride for slow pathway in SlowFast
-    "model_depth": 18,  # Small test model depth for slowfast, otherwise set to 50, 101, 152
+    "model_depth": 50,  # Small test model depth for slowfast, set to 50, 101, ... 152?
 
     # Training, used by train.py
     "batch_size": 6,    # Reduced from 8 to 4 to lower memory usage
