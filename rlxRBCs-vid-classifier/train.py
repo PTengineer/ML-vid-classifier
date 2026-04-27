@@ -47,7 +47,7 @@ def train_one_epoch(
 
     Args:
         model: PyTorch model to train.
-        dataloader: Iterable returning (videos, labels).
+        dataloader: Iterable returning (inputs, targets).
         criterion: Loss function such as CrossEntropyLoss.
         optimizer: Optimizer such as SGD or Adam.
         device: Target device ('cuda' or 'cpu').
@@ -61,32 +61,39 @@ def train_one_epoch(
     total_correct = 0
     total_samples = 0
 
-    accumulation_steps = cfg.acc_steps  # For future use if gradient accumulation is needed
+    accumulation_steps = cfg.acc_steps  
 
-    for i, (videos, labels) in enumerate(tqdm(dataloader, desc="Training", leave=False)):
-        if isinstance(videos, list):
-            videos = [v.to(device) for v in videos]
+    optimizer.zero_grad()
+
+    for i, (inputs, targets) in enumerate(tqdm(dataloader, desc="Training", leave=False)):
+        if isinstance(inputs, list):
+            inputs = [v.to(device) for v in inputs]
         else:
-            videos = videos.to(device)
+            inputs = inputs.to(device)
         
-        labels = labels.to(device)
+        targets = targets.to(device)
 
-        optimizer.zero_grad()
+        outputs = model(inputs)
 
-        outputs = model(videos)
-        loss = criterion(outputs, labels)
+        # Normalize loss to account for gradient accumulation
+        loss = criterion(outputs, targets) / accumulation_steps
         loss.backward()
-        
-        # Gradient clipping (optional, can help with stability)
+
+        # Gradient clipping (optional, can help with stability and out of memory issues)
         if (i + 1) % accumulation_steps == 0:
             nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            optimizer.step()
+            optimizer.step()               # UPDATE WEIGHTS
             optimizer.zero_grad()
 
-        batch_size = labels.size(0)
+        batch_size = targets.size(0)
         total_loss += loss.item() * batch_size
-        total_correct += (outputs.argmax(1) == labels).sum().item()
+        total_correct += (outputs.argmax(1) == targets).sum().item()
         total_samples += batch_size
+
+    if len(dataloader) % accumulation_steps != 0:
+        nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        optimizer.step()
+        optimizer.zero_grad()
 
     avg_loss = total_loss / total_samples
     avg_acc = total_correct / total_samples
@@ -197,6 +204,7 @@ def main() -> None:
             train_loss, train_acc = train_one_epoch(
                 model, train_loader, criterion, optimizer, device
             )
+
         except RuntimeError as e:
             log.error(f"Epoch {epoch+1} failed: {e}. Attempting to resume from best checkpoint if available.")
             best_ckpt = os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth")
@@ -211,7 +219,7 @@ def main() -> None:
             continue
 
         val_loss, val_acc = evaluate(model, val_loader, criterion, device)
-        
+
         scheduler.step()
 
         log.info(

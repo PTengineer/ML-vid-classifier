@@ -20,7 +20,7 @@ def evaluate(
 
     Args:
         model: Trained PyTorch model.
-        dataloader: DataLoader providing (videos, labels) batches.
+        dataloader: DataLoader providing (inputs, targets) batches.
         criterion: Loss function used for evaluation (e.g., CrossEntropyLoss).
         device: Device to run evaluation on ('cuda' or 'cpu').
 
@@ -37,21 +37,24 @@ def evaluate(
 
     # Inference-only mode disables gradient storage for speed/memory
     with torch.inference_mode():
-        for videos, labels in dataloader:
-            videos = videos.to(device)
-            labels = labels.to(device)
+        for inputs, targets in dataloader:
+            if isinstance(inputs, list):
+                inputs = [x.to(device) for x in inputs]
+            else:
+                inputs = inputs.to(device)
+            targets = targets.to(device)
 
             # Forward pass
-            outputs = model(videos)
+            outputs = model(inputs)
 
             # Loss accumulation (sum, normalized later)
-            loss = criterion(outputs, labels)
-            batch_size = labels.size(0)
+            loss = criterion(outputs, targets)
+            batch_size = targets.size(0)
             total_loss += loss.item() * batch_size
 
             # Accuracy accumulation
             predictions = outputs.argmax(dim=1)
-            total_correct += (predictions == labels).sum().item()
+            total_correct += (predictions == targets).sum().item()
 
             total_samples += batch_size
 
@@ -61,5 +64,8 @@ def evaluate(
     # Normalize to per-sample averages
     avg_loss = total_loss / total_samples
     avg_accuracy = total_correct / total_samples
+
+    # Restore mode back to traning
+    model.train()
 
     return avg_loss, avg_accuracy

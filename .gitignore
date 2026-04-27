@@ -4,3 +4,8 @@
 # Python
 __pycache__
 *.pyc
+
+# Project
+rlxRBCs-vid-classifier/logs/train_log.txt
+rlxRBCs-vid-classifier/data/temp/*
+rlxRBCs-vid-classifier/data/videos/*

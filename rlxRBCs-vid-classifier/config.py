@@ -37,7 +37,7 @@ DEFAULTS = {
     # Model, used by video_transforms.py and model.py
     #"num_classes": 4,  # Moved to train.py to be dynamic based on dataset
     "model_name": "rlxClassDetect_test0",   # base1 being more descriptive of an R50 depth, small might be 18
-    "input_frames": 8,
+    "input_frames": 32,  # SlowFast typically uses 32 frames, but can be adjusted based on GPU capacity and clip duration
     "input_size": 224,   # For overfit test we use minimum, actual training can use 224 or 256 depending on GPU capacity
     "pretrained": False,
     "ptv_module": "slowfast",
@@ -46,13 +46,13 @@ DEFAULTS = {
 
     # Training, used by train.py
     "batch_size": 6,    # Reduced from 8 to 4 to lower memory usage
-    "epochs": 10,
+    "epochs": 3,        # Set to 3 for overfit testing, 25, 50+ for actual training
     "lr": 1e-4,         # Set for stability
     "momentum": 0.9,
     "weight_decay": 1e-4,
     "num_workers": 2,
     "scheduler_tmax": 20,   # Scheduler
-    "acc_steps": 2,         # Gradient accumulation steps
+    "acc_steps": 4,         # Gradient accumulation steps
 
     # Augmentation, used by video_transforms.py   #TODO set these to appropriate values based on dataset actual Height Length sizes
     "train_transforms": {
