@@ -34,7 +34,6 @@ def imagenet_normalize(x: torch.Tensor) -> torch.Tensor:
 
 
 def _resize_spatial(x: torch.Tensor, size: int) -> torch.Tensor:
-    # x: (C, T, H, W) -> permute to (T, C, H, W) for interpolate
     x_t = x.permute(1, 0, 2, 3)
     x_t_resized = F.interpolate(x_t, size=(size, size), mode="bilinear", align_corners=False)
     return x_t_resized.permute(1, 0, 2, 3)

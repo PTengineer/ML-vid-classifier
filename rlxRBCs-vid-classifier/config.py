@@ -46,13 +46,13 @@ DEFAULTS = {
 
     # Training, used by train.py
     "batch_size": 6,    # Reduced from 8 to 4 to lower memory usage
-    "epochs": 3,        # Set to 3 for overfit testing, 25, 50+ for actual training
-    "lr": 1e-4,         # Set for stability
+    "epochs": 11,        # Set to 3 for overfit testing, 25, 50+ for actual training
+    "lr": 1e-4,         # Set for stability, 1e-3 for overfit testing, 1e-5 for production training
     "momentum": 0.9,
-    "weight_decay": 1e-4,
+    "weight_decay": 1e-4,   # 0 for overfit test 
     "num_workers": 2,
     "scheduler_tmax": 20,   # Scheduler
-    "acc_steps": 4,         # Gradient accumulation steps
+    "acc_steps": 2,         # Gradient accumulation steps, 1 for no accumulation, >1 to simulate larger batch sizes
 
     # Augmentation, used by video_transforms.py   #TODO set these to appropriate values based on dataset actual Height Length sizes
     "train_transforms": {
@@ -101,6 +101,11 @@ def get_config():   #TODO be sure these aren't duplicated in train.py
     parser.add_argument("--random_clip", action="store_true", help="Enable random start times for video clips.")
     parser.add_argument("--ptv_module", type=str, choices=["slowfast", "resnet"], help="Select between slowfast and resnet modules.")
     
+    # Overfit test parameters 
+    parser.add_argument("--overfit_mode", action="store_true",
+                    help="Auto-apply overfit test defaults: 0, lr=1e-3, weight_decay=0, acc_steps=1")
+
+
     """ #TODO these are duplicated in crop_preprocess, consider how to unify or separate concerns better
     # Crop preprocessing arguments
     parser.add_argument("--input_dir", type=Path, help="Path to unprocessed videos directory.")
@@ -126,6 +131,15 @@ def get_config():   #TODO be sure these aren't duplicated in train.py
     config["data_root"].mkdir(parents=True, exist_ok=True)
     config["unprocessed_dir"].mkdir(parents=True, exist_ok=True)
 
+    # Overfit mode adjustments:
+    if args.overfit_mode:
+        config["num_workers"] = 0  # Disable multiprocessing
+        config["random_clip"] = False
+        config["lr"] = 1e-3
+        config["weight_decay"] = 0
+        config["acc_steps"] = 1
+        config["epochs"] = 7
+        
     # Convert to a lightweight namespace
     from types import SimpleNamespace
     return SimpleNamespace(**config)

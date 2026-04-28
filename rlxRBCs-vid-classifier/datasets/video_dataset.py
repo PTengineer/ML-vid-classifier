@@ -1,6 +1,6 @@
 ''' Custom dataset for video files '''
 
-import random
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 from pytorchvideo.data.encoded_video import EncodedVideo
@@ -32,6 +32,7 @@ class RBCsDataset(Dataset):
         transform=None,
         clip_duration=None,
         random_clip=None,
+        seed=None,
         class_to_idx=None,
         filename_col: str = "filename",
         label_col: str = "label",
@@ -63,6 +64,7 @@ class RBCsDataset(Dataset):
         self.transform = transform
         self.clip_duration = clip_duration if clip_duration is not None else cfg.clip_duration
         self.random_clip = random_clip if random_clip is not None else cfg.random_clip
+        self.rng = np.random.RandomState(seed)
 
     def __len__(self):
         return len(self.annotations)
@@ -81,7 +83,7 @@ class RBCsDataset(Dataset):
         start_time = 0.0
 
         if self.random_clip and video_duration > clip_duration:
-            start_time = random.uniform(0, video_duration - clip_duration)
+            start_time = self.rng.uniform(0, video_duration - clip_duration)
 
         # Extract clip segment
         # PyTorchVideo natively returns a tensor of shape (C, T, H, W)

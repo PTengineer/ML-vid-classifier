@@ -24,7 +24,23 @@ import random
 # Reproducability Seeding
 # ---------------------------------------------------------
 def set_seed(seed: int = 101) -> None:
-    """Set random seed for reproducibility across numpy, torch, and python random."""
+    """
+    Set random seed for reproducibility across all randomness sources.
+    
+    Controls:
+    - Python's global random module (for any random.* calls)
+    - NumPy's global random state (for general numpy operations)
+    - PyTorch's random state (for model initialization, dropout, conv layers)
+    - CUDA random state (for GPU operations)
+    
+    Note: Dataset-level randomness (video clip extraction) uses instance-level
+    np.random.RandomState(seed), which is initialized independently but 
+    deterministically from cfg.seed. This design ensures reproducibility
+    while maintaining clean separation between global and data-pipeline randomness.
+    
+    Args:
+        seed (int): Random seed value. Default: 101.
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -152,6 +168,7 @@ def main() -> None:
         video_dir=cfg.data_root,
         transform=test_transform(),  # set to test_transform() for overfit testing
         class_to_idx=class_to_idx,
+        seed=cfg.seed, 
     )
 
     val_set = RBCsDataset(
@@ -159,6 +176,7 @@ def main() -> None:
         video_dir=cfg.data_root,
         transform=val_transform(),
         class_to_idx=class_to_idx,
+        seed=cfg.seed, 
     )
 
     train_loader = DataLoader(
