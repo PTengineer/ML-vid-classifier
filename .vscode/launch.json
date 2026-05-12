@@ -9,7 +9,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/rlxRBCs-vid-classifier",
-            "args": ["--device", "cpu", "--num_workers", "0"]
+            "args": ["--device", "cpu", "--overfit_mode"]
         }
     ]
 }

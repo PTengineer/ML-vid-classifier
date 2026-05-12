@@ -4,7 +4,7 @@ import os
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from typing import Tuple
 
 from config import cfg
@@ -57,6 +57,7 @@ def train_one_epoch(
     criterion: nn.Module,
     optimizer: optim.Optimizer,
     device: torch.device,
+    pbar: tqdm,
 ) -> Tuple[float, float]:
     """
     Train the model for one full epoch.
@@ -71,8 +72,7 @@ def train_one_epoch(
     Returns:
         (avg_loss, avg_accuracy)
     """
-    model.train()
-
+    
     total_loss = 0.0
     total_correct = 0
     total_samples = 0
@@ -81,7 +81,7 @@ def train_one_epoch(
 
     optimizer.zero_grad()
 
-    for i, (inputs, targets) in enumerate(tqdm(dataloader, desc="Training", leave=False)):
+    for i, (inputs, targets) in enumerate(dataloader):
         if isinstance(inputs, list):
             inputs = [v.to(device) for v in inputs]
         else:
@@ -94,6 +94,10 @@ def train_one_epoch(
         # Normalize loss to account for gradient accumulation
         loss = criterion(outputs, targets) / accumulation_steps
         loss.backward()
+
+        # Update the progress bar with live metrics
+        pbar.update(1)
+        pbar.set_postfix({"loss": f"{loss.item():.4f}"})
 
         # Gradient clipping (optional, can help with stability and out of memory issues)
         if (i + 1) % accumulation_steps == 0:
@@ -182,7 +186,7 @@ def main() -> None:
     train_loader = DataLoader(
         train_set,
         batch_size=cfg.batch_size,
-        shuffle=True,
+        shuffle=cfg.shuffle,
         num_workers=cfg.num_workers,
     )
 
@@ -198,12 +202,19 @@ def main() -> None:
     # --------------------------
     num_classes = len(class_to_idx) # for when a test dataset is used with 2 classes
     model = build_model(num_classes=num_classes).to(device)
+    
+    if getattr(cfg, 'overfit_mode', False):
+        # Freeze BatchNorm3d layers in SlowFast ??
+        for module in model.modules():
+            if isinstance(module, torch.nn.BatchNorm3d):
+                module.eval()
+
     criterion = nn.CrossEntropyLoss()
 
     optimizer = optim.SGD(
         model.parameters(),
         lr=cfg.lr,
-        momentum=0.9,
+        momentum=cfg.momentum,
         weight_decay=cfg.weight_decay,
     )
 
@@ -217,51 +228,58 @@ def main() -> None:
     # --------------------------
     # Training Loop
     # --------------------------
+    batches_per_epoch = len(train_loader)
+
     for epoch in range(cfg.epochs):
-        try:
-            train_loss, train_acc = train_one_epoch(
-                model, train_loader, criterion, optimizer, device
+        model.train()
+            
+        with tqdm(total=batches_per_epoch, desc=f"Epoch {epoch+1}/{cfg.epochs}", ncols=80) as pbar:
+            try:
+                train_loss, train_acc = train_one_epoch(
+                    model, train_loader, criterion, optimizer, device, pbar
+                )
+
+            except RuntimeError as e:
+                log.error(f"Epoch {epoch+1} failed: {e}. Attempting to resume from best checkpoint if available.")
+                best_ckpt = os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth")
+                if os.path.exists(best_ckpt):
+                    try:
+                        model.load_state_dict(torch.load(best_ckpt))
+                        log.info(f"Loaded checkpoint {best_ckpt}")
+                    except Exception as ex:
+                        log.error(f"Failed to load checkpoint {best_ckpt}: {ex}")
+                else:
+                    log.warning(f"No checkpoint found at {best_ckpt}; continuing without loading.")
+                continue
+
+            val_loss, val_acc = evaluate(model, val_loader, criterion, device)
+
+            if getattr(cfg, 'use_scheduler', True):
+                scheduler.step()
+
+            log.info(
+                f"Epoch {epoch+1:3d}/{cfg.epochs} | "
+                f"Train Loss: {train_loss:>.4f} | Train Acc: {train_acc:>.4f} | "
+                f"Val Loss: {val_loss:>.4f} | Val Acc: {val_acc:>.4f}"
             )
 
-        except RuntimeError as e:
-            log.error(f"Epoch {epoch+1} failed: {e}. Attempting to resume from best checkpoint if available.")
-            best_ckpt = os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth")
-            if os.path.exists(best_ckpt):
-                try:
-                    model.load_state_dict(torch.load(best_ckpt))
-                    log.info(f"Loaded checkpoint {best_ckpt}")
-                except Exception as ex:
-                    log.error(f"Failed to load checkpoint {best_ckpt}: {ex}")
-            else:
-                log.warning(f"No checkpoint found at {best_ckpt}; continuing without loading.")
-            continue
+            # Save best model
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+                
+                checkpoint = {
+                    "epoch": epoch + 1,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "best_val_accuracy": best_val_acc,
+                    "cfg": cfg.__dict__, # Save config for reproducibility
+                }
+                
+                torch.save(
+                    checkpoint,
+                    os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth"),
+                )
 
-        val_loss, val_acc = evaluate(model, val_loader, criterion, device)
-
-        scheduler.step()
-
-        log.info(
-            f"Epoch {epoch+1:3d}/{cfg.epochs} | "
-            f"Train Loss: {train_loss:>.4f} | Train Acc: {train_acc:>.4f} | "
-            f"Val Loss: {val_loss:>.4f} | Val Acc: {val_acc:>.4f}"
-        )
-
-        # Save best model
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
-            
-            checkpoint = {
-                "epoch": epoch + 1,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "best_val_accuracy": best_val_acc,
-                "cfg": cfg.__dict__, # Save config for reproducibility
-            }
-            
-            torch.save(
-                checkpoint,
-                os.path.join(cfg.output_dir, cfg.model_name, "_best_model.pth"),
-            )
 
     log.info(f"Training finished. Best validation accuracy: {best_val_acc:.4f}")
     print(f"Training finished, details written to log file. Best validation accuracy: {best_val_acc:.4f}")

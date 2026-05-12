@@ -42,7 +42,7 @@ def build_model(num_classes: int = 4) -> nn.Module:
             input_channels=(3, 3), # type: ignore
             model_depth=cfg.model_depth,
             model_num_class=num_classes,
-            dropout_rate=0.5,
+            dropout_rate=cfg.dropout_rate,  
             norm=nn.BatchNorm3d,
             activation=nn.ReLU,      
         )

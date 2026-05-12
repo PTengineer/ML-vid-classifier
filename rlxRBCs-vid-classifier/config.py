@@ -43,16 +43,19 @@ DEFAULTS = {
     "ptv_module": "slowfast",
     "slowfast_alpha": 4,  # Temporal stride for slow pathway in SlowFast
     "model_depth": 50,  # Small test model depth for slowfast, set to 50, 101, ... 152?
+    "dropout_rate": 0.05, #TODO changed from 0.5 default for overfit test 
 
     # Training, used by train.py
     "batch_size": 6,    # Reduced from 8 to 4 to lower memory usage
     "epochs": 11,        # Set to 3 for overfit testing, 25, 50+ for actual training
     "lr": 1e-4,         # Set for stability, 1e-3 for overfit testing, 1e-5 for production training
     "momentum": 0.9,
-    "weight_decay": 1e-4,   # 0 for overfit test 
+    "weight_decay": 1e-5,   # 0 for overfit test 
     "num_workers": 2,
+    "use_scheduler": True,
     "scheduler_tmax": 20,   # Scheduler
     "acc_steps": 2,         # Gradient accumulation steps, 1 for no accumulation, >1 to simulate larger batch sizes
+    "shuffle": True,  # train_loader uses True; val_loader, and overfit use False 
 
     # Augmentation, used by video_transforms.py   #TODO set these to appropriate values based on dataset actual Height Length sizes
     "train_transforms": {
@@ -134,11 +137,16 @@ def get_config():   #TODO be sure these aren't duplicated in train.py
     # Overfit mode adjustments:
     if args.overfit_mode:
         config["num_workers"] = 0  # Disable multiprocessing
+        config["batch_size"] = 2    
         config["random_clip"] = False
-        config["lr"] = 1e-3
+        config["shuffle"] = False
+        config["use_scheduler"] = False
+        config["lr"] = 1e-1
+        config["momentum"] = 0.9
         config["weight_decay"] = 0
         config["acc_steps"] = 1
-        config["epochs"] = 7
+        config["epochs"] = 21
+
         
     # Convert to a lightweight namespace
     from types import SimpleNamespace

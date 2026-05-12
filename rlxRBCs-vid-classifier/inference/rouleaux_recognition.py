@@ -134,7 +134,7 @@ def predict_video_artifact(
                 "prediction": "Decoding Error",
                 "confidence": 0.0}
 
-    # Forward pass — inference mode is safest
+    # Forward pass — inference mode is safest and preferable in > v1.9
     with torch.inference_mode():
         logits = model(tensor)
         probabilities = torch.softmax(logits, dim=1)
