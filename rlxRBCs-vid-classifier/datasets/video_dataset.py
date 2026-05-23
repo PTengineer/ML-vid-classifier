@@ -93,12 +93,5 @@ class RBCsDataset(Dataset):
         if self.transform:
             video_data = self.transform(video_data)
 
-        # --- SlowFast Pathway Packing ---
-        # SlowFast requires a list of two tensors: [slow_pathway, fast_pathway]
-        alpha = getattr(cfg, "slowfast_alpha", 4)  
-        
-        fast_pathway = video_data
-        # Subsample the temporal dimension (index 1) by a factor of alpha
-        slow_pathway = fast_pathway[:, ::alpha, :, :]  
-        
-        return [slow_pathway, fast_pathway], label
+        return video_data, label
+

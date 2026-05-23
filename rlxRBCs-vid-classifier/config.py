@@ -44,6 +44,8 @@ DEFAULTS = {
     "slowfast_alpha": 4,  # Temporal stride for slow pathway in SlowFast
     "model_depth": 50,  # Small test model depth for slowfast, set to 50, 101, ... 152?
     "dropout_rate": 0.05, #TODO changed from 0.5 default for overfit test 
+    "frames_per_second": 30,
+    "sampling_rate": 2,
 
     # Training, used by train.py
     "batch_size": 6,    # Reduced from 8 to 4 to lower memory usage
@@ -136,16 +138,16 @@ def get_config():   #TODO be sure these aren't duplicated in train.py
 
     # Overfit mode adjustments:
     if args.overfit_mode:
-        config["num_workers"] = 0  # Disable multiprocessing
+        config["num_workers"] = 1  # Disable multiprocessing
         config["batch_size"] = 2    
         config["random_clip"] = False
         config["shuffle"] = False
         config["use_scheduler"] = False
-        config["lr"] = 1e-1
+        config["lr"] = 1.12e-3
         config["momentum"] = 0.9
         config["weight_decay"] = 0
         config["acc_steps"] = 1
-        config["epochs"] = 21
+        config["epochs"] = 8
 
         
     # Convert to a lightweight namespace

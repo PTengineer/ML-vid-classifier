@@ -15,11 +15,49 @@ from pytorchvideo.transforms import (
     RandomResizedCrop,
     UniformTemporalSubsample,
 )
-from torchvision.transforms import CenterCrop, Compose, Lambda, RandomHorizontalFlip
+from torchvision.transforms import Compose, Lambda, RandomHorizontalFlip
 import torch
 
 import torch.nn.functional as F
 from config import cfg
+
+
+class PackPathway(torch.nn.Module):
+    """
+    Transform for packing video frames into SlowFast dual-pathway format.
+    
+    Converts a single [C, T, H, W] tensor into [slow_pathway, fast_pathway]
+    where slow_pathway has temporal stride of alpha relative to fast_pathway.
+    
+    Args:
+        alpha (int): Temporal stride for slow pathway. Default: 4.
+    """
+    def __init__(self, alpha: int = 4):
+        super().__init__()
+        self.alpha = alpha
+    
+    def forward(self, frames: torch.Tensor) -> list:
+        """
+        Deterministically pack frames into SlowFast dual pathways using torch.index_select.
+        
+        Ensures exactly T // alpha frames in slow pathway, avoiding ceil() artifacts
+        from stride-based slicing (e.g., [:, ::alpha, :, :]).
+        
+        Args:
+            frames: Tensor of shape [C, T, H, W]
+        
+        Returns:
+            [slow_pathway, fast_pathway]: List of two tensors with shapes
+                slow: [C, T//alpha, H, W]
+                fast: [C, T, H, W]
+        """
+        fast_pathway = frames
+        num_slow_frames = frames.shape[1] // self.alpha
+        slow_indices = torch.linspace(
+            0, frames.shape[1] - 1, num_slow_frames
+        ).long().to(frames.device)
+        slow_pathway = torch.index_select(frames, 1, slow_indices)
+        return [slow_pathway, fast_pathway]
 
 
 # Top-level helpers (picklable) ------------------------------------------------
@@ -56,6 +94,7 @@ def center_crop_to_input(x: torch.Tensor) -> torch.Tensor:
 def train_transform():
     """Video transform pipeline used during training."""
     train_cfg = cfg.train_transforms
+    alpha = getattr(cfg, "slowfast_alpha", 4)
 
     return Compose([
         UniformTemporalSubsample(cfg.input_frames),
@@ -70,29 +109,30 @@ def train_transform():
         Lambda(center_crop_to_input),
         Lambda(to_float_div255),
         Lambda(imagenet_normalize),
-        
+        PackPathway(alpha=alpha),
     ])
 
 
 def val_transform():
     """Video transform pipeline for validation and inference (deterministic)."""
+    alpha = getattr(cfg, "slowfast_alpha", 4)
     return Compose([
         UniformTemporalSubsample(cfg.input_frames),
         Lambda(center_crop_to_input),
         Lambda(to_float_div255),
         Lambda(imagenet_normalize),
-        
+        PackPathway(alpha=alpha),
     ])
 
 
 def test_transform():
     """Video transform pipeline for overfit testing (minimal + deterministic)."""
+    alpha = getattr(cfg, "slowfast_alpha", 4)
 
     return Compose([
         UniformTemporalSubsample(cfg.input_frames),
-        #ConvertUint8ToFloat(),
         Lambda(center_crop_to_input),
         Lambda(to_float_div255),
         Lambda(imagenet_normalize),
-        
+        PackPathway(alpha=alpha),
     ])
