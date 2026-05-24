@@ -21,6 +21,12 @@ from pathlib import Path
 
 DEFAULTS = {
     # General, used by video_dataset.py and train.py
+    
+    # Temporal window for clip extraction.
+    # UniformTemporalSubsample(input_frames) will robustly handle any source video FPS,
+    # extracting exactly input_frames regardless of clip_duration value, as long as the
+    # clip contains enough frames. Current 5.0s provides ample margin for 32-frame extraction.
+
     "clip_duration": 5.0,
     "random_clip": True,
     "seed": 42,
@@ -40,6 +46,8 @@ DEFAULTS = {
     "input_frames": 32,  # SlowFast typically uses 32 frames, but can be adjusted based on GPU capacity and clip duration
     "input_size": 224,   # For overfit test we use minimum, actual training can use 224 or 256 depending on GPU capacity
     "pretrained": False,
+    "mean": [0.45, 0.45, 0.45],
+    "std": [0.225, 0.225, 0.225],
     "ptv_module": "slowfast",
     "slowfast_alpha": 4,  # Temporal stride for slow pathway in SlowFast
     "model_depth": 50,  # Small test model depth for slowfast, set to 50, 101, ... 152?
@@ -143,7 +151,7 @@ def get_config():   #TODO be sure these aren't duplicated in train.py
         config["random_clip"] = False
         config["shuffle"] = False
         config["use_scheduler"] = False
-        config["lr"] = 1.12e-3
+        config["lr"] = 2.42e-3
         config["momentum"] = 0.9
         config["weight_decay"] = 0
         config["acc_steps"] = 1

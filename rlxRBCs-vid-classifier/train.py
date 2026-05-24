@@ -135,6 +135,8 @@ def validate_config() -> None:
     assert cfg.batch_size > 0, "batch_size must be positive"
     assert cfg.epochs > 0, "epochs must be positive"
     assert cfg.lr > 0, "learning rate must be positive"
+    assert cfg.input_frames % cfg.slowfast_alpha == 0, \
+       f"input_frames ({cfg.input_frames}) must be divisible by alpha ({cfg.slowfast_alpha})"    
 
     from pathlib import Path
     assert Path(cfg.data_root).exists(), f"data_root not found: {cfg.data_root}"

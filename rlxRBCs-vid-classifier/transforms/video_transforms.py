@@ -9,16 +9,18 @@ except ModuleNotFoundError:
         sys.modules["torchvision.transforms.functional_tensor"] = mod
     except ModuleNotFoundError:
         pass
+from torchvision.transforms import Compose, Lambda, RandomHorizontalFlip
+
+import torch
+
+import torch.nn.functional as F
 from pytorchvideo.transforms import (
-    ConvertUint8ToFloat,
+    Normalize,
     RandomShortSideScale,
     RandomResizedCrop,
     UniformTemporalSubsample,
 )
-from torchvision.transforms import Compose, Lambda, RandomHorizontalFlip
-import torch
 
-import torch.nn.functional as F
 from config import cfg
 
 
@@ -78,14 +80,24 @@ def _resize_spatial(x: torch.Tensor, size: int) -> torch.Tensor:
 
 
 def center_crop_to_input(x: torch.Tensor) -> torch.Tensor:
+    """Center-crop or upscale video tensor spatially. Preserves C, T dims."""
     size = cfg.input_size
+    
+    # Validate expected shape [C, T, H, W]
     if x.ndim != 4:
-        return x
+        raise ValueError(f"Expected 4D tensor, got shape {x.shape}")
+    
     C, T, H, W = x.shape
+    
+    # Early exit: already target size
     if H == size and W == size:
         return x
+    
+    # Upscale if too small
     if H < size or W < size:
         return _resize_spatial(x, size)
+    
+    # Center crop (preserves C, T)
     top = (H - size) // 2
     left = (W - size) // 2
     return x[:, :, top : top + size, left : left + size]
@@ -94,45 +106,91 @@ def center_crop_to_input(x: torch.Tensor) -> torch.Tensor:
 def train_transform():
     """Video transform pipeline used during training."""
     train_cfg = cfg.train_transforms
-    alpha = getattr(cfg, "slowfast_alpha", 4)
+    ptv_module = getattr(cfg, "ptv_module", "slowfast")  # default fallback
 
-    return Compose([
-        UniformTemporalSubsample(cfg.input_frames),
-        RandomShortSideScale(min_size=train_cfg.short_side_min, max_size=train_cfg.short_side_max),
-        RandomResizedCrop(
-            target_height=train_cfg.crop_size,
-            target_width=train_cfg.crop_size,
-            scale=(0.7, 1.0),
-            aspect_ratio=(0.75, 1.3333333333333333),
-        ),
-        RandomHorizontalFlip(),
-        Lambda(center_crop_to_input),
-        Lambda(to_float_div255),
-        Lambda(imagenet_normalize),
-        PackPathway(alpha=alpha),
-    ])
+
+    if ptv_module.lower() == "slowfast":
+        # For SlowFast, we apply spatial augmentations before packing pathways
+        # to ensure both pathways receive the same spatial transformations.
+        alpha = getattr(cfg, "slowfast_alpha", 4)
+        return Compose([
+            Lambda(center_crop_to_input),        
+            UniformTemporalSubsample(cfg.input_frames),
+            Lambda(to_float_div255),     
+            Normalize(cfg.mean, cfg.std, inplace=False),
+            RandomShortSideScale(min_size=train_cfg.short_side_min, max_size=train_cfg.short_side_max),
+            RandomResizedCrop(
+                target_height=train_cfg.crop_size,
+                target_width=train_cfg.crop_size,
+                scale=(0.7, 1.0),
+                aspect_ratio=(0.75, 1.3333333333333333),
+            ),
+            RandomHorizontalFlip(),
+
+            PackPathway(alpha=alpha),
+        ])
+    
+    elif ptv_module.lower() == "resnet":
+        # For ResNet3D, we can apply spatial augmentations directly without packing pathways.
+        return Compose([
+            Lambda(center_crop_to_input),        
+            UniformTemporalSubsample(cfg.input_frames),
+            Lambda(to_float_div255),     
+            Normalize(cfg.mean, cfg.std, inplace=False),
+            RandomShortSideScale(min_size=train_cfg.short_side_min, max_size=train_cfg.short_side_max),
+            RandomResizedCrop(
+                target_height=train_cfg.crop_size,
+                target_width=train_cfg.crop_size,
+                scale=(0.7, 1.0),
+                aspect_ratio=(0.75, 1.3333333333333333),
+            ),
+            RandomHorizontalFlip(),
+        ])
 
 
 def val_transform():
     """Video transform pipeline for validation and inference (deterministic)."""
-    alpha = getattr(cfg, "slowfast_alpha", 4)
-    return Compose([
-        UniformTemporalSubsample(cfg.input_frames),
-        Lambda(center_crop_to_input),
-        Lambda(to_float_div255),
-        Lambda(imagenet_normalize),
-        PackPathway(alpha=alpha),
-    ])
+    ptv_module = getattr(cfg, "ptv_module", "slowfast")
+    if ptv_module.lower() == "slowfast":    
+        alpha = getattr(cfg, "slowfast_alpha", 4)
+
+        return Compose([
+            Lambda(center_crop_to_input),        
+            UniformTemporalSubsample(cfg.input_frames),
+            Lambda(to_float_div255),
+            Normalize(cfg.mean, cfg.std, inplace=False),
+
+            PackPathway(alpha=alpha),
+        ])
+    
+    elif ptv_module.lower() == "resnet":
+        return Compose([
+            Lambda(center_crop_to_input),        
+            UniformTemporalSubsample(cfg.input_frames),
+            Lambda(to_float_div255),
+            Normalize(cfg.mean, cfg.std, inplace=False),
+        ])
 
 
 def test_transform():
     """Video transform pipeline for overfit testing (minimal + deterministic)."""
-    alpha = getattr(cfg, "slowfast_alpha", 4)
+    ptv_module = getattr(cfg, "ptv_module", "slowfast")
+    if ptv_module.lower() == "slowfast":    
+        alpha = getattr(cfg, "slowfast_alpha", 4)
 
-    return Compose([
-        UniformTemporalSubsample(cfg.input_frames),
-        Lambda(center_crop_to_input),
-        Lambda(to_float_div255),
-        Lambda(imagenet_normalize),
-        PackPathway(alpha=alpha),
-    ])
+        return Compose([
+            Lambda(center_crop_to_input),        
+            UniformTemporalSubsample(cfg.input_frames),
+            Lambda(to_float_div255),
+            Normalize(cfg.mean, cfg.std, inplace=False),
+
+            PackPathway(alpha=alpha),
+        ])
+    
+    elif ptv_module.lower() == "resnet":
+        return Compose([
+            Lambda(center_crop_to_input),        
+            UniformTemporalSubsample(cfg.input_frames),
+            Lambda(to_float_div255),
+            Normalize(cfg.mean, cfg.std, inplace=False),
+        ])    
