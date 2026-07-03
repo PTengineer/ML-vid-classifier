@@ -18,6 +18,7 @@ import argparse
 import cv2
 import numpy as np
 import platform
+from tqdm.auto import tqdm
 from pathlib import Path
 from typing import Tuple, Dict, List, Any, Optional
 
@@ -251,6 +252,7 @@ def crop_video(
         canny_high: Upper Canny threshold.
         margin_px: Safety margin around detected content.
         sample_frames: Number of frames to analyze for crop consensus.
+        pbar: Optional tqdm progress bar instance for logging progress.
 
     Returns:
         Dictionary with processing results:
@@ -333,6 +335,11 @@ def crop_video(
         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
         frames_written = 0
 
+        # If frame_count is unknown (sometimes -1), tqdm can still show progress.
+        total = frame_count if frame_count > 0 else None
+
+        pbar_frames = tqdm(total=total, desc="  frames", unit="frame", leave=True, ncols=80)
+
         for fr in range(frame_count):
             ret, frame = cap.read()
             if not ret:
@@ -342,7 +349,9 @@ def crop_video(
             cropped = frame[y1:y2, x1:x2]
             out.write(cropped)
             frames_written += 1
+            pbar_frames.update(1)
 
+        pbar_frames.close()
         cap.release()
         out.release()
 
