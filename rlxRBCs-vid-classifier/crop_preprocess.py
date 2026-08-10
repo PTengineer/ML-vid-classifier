@@ -3,7 +3,7 @@ crop_preprocess.py — Preprocessing script to remove black bars from videos
 
 Purpose:
 - Scan raw videos in data/unprocessed/
-- Detect and remove letterbox/side black bars using edge detection
+- Detect and remove letterbox/pillarbox bars using edge detection
 - Output cropped videos with "-crop" suffix to data/videos/
 - Preserve original fps and codec for minimal distortion
 - Log processing details and dimension statistics
@@ -440,7 +440,7 @@ def main() -> None:
     log = logger.get_logger(LOG_NAME, LOG_FILE)
     
     parser = argparse.ArgumentParser(
-        description="Preprocess videos by removing black bars (letterbox/sidebars)"
+        description="Preprocess videos by removing black bars (letterbox/pillarbox)"
     )
     parser.add_argument(
         '--input_dir',
