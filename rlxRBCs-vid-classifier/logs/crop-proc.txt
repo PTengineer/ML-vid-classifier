@@ -1697,3 +1697,103 @@
 2026-04-13 20:59:14-0400 - CxD-21-crop-preprocess - INFO -   Max: (356, 550) px
 2026-04-13 20:59:14-0400 - CxD-21-crop-preprocess - INFO - FPS range: 30.0 - 30.0
 2026-04-13 20:59:14-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:04:02-0400 - CxD-21-crop-preprocess - INFO - Starting video crop preprocessing
+2026-07-02 20:04:02-0400 - CxD-21-crop-preprocess - INFO - Input: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\unprocessed
+2026-07-02 20:04:02-0400 - CxD-21-crop-preprocess - INFO - Output: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\videos
+2026-07-02 20:04:02-0400 - CxD-21-crop-preprocess - INFO - Canny thresholds: 50-150, Margin: 3px, Sample frames: 10
+2026-07-02 20:04:02-0400 - CxD-21-crop-preprocess - INFO - Found 2 video(s) to process
+2026-07-02 20:05:05-0400 - CxD-21-crop-preprocess - INFO - Starting video crop preprocessing
+2026-07-02 20:05:05-0400 - CxD-21-crop-preprocess - INFO - Input: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\unprocessed
+2026-07-02 20:05:05-0400 - CxD-21-crop-preprocess - INFO - Output: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\videos
+2026-07-02 20:05:05-0400 - CxD-21-crop-preprocess - INFO - Canny thresholds: 50-150, Margin: 3px, Sample frames: 10
+2026-07-02 20:05:05-0400 - CxD-21-crop-preprocess - INFO - Found 2 video(s) to process
+2026-07-02 20:05:05-0400 - CxD-21-crop-preprocess - INFO - [1/2] Processing: P1D-testdem.mp4
+2026-07-02 20:05:07-0400 - CxD-21-crop-preprocess - INFO -   ✓ Success: P1D-testdem.mp4 (782×556 → 356×548, 30.0 fps, 151 frames)
+2026-07-02 20:05:07-0400 - CxD-21-crop-preprocess - INFO - [2/2] Processing: P2A-testdem.mp4
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO -   ✓ Success: P2A-testdem.mp4 (782×556 → 356×550, 30.0 fps, 151 frames)
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO - 
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO - CROP PREPROCESSING SUMMARY
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO - Total videos processed: 2 success, 0 failed
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO - Output dimensions:
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO -   Min: (356, 548) px
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO -   Max: (356, 550) px
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO - FPS range: 30.0 - 30.0
+2026-07-02 20:05:08-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:23:25-0400 - CxD-21-crop-preprocess - INFO - Starting video crop preprocessing
+2026-07-02 20:23:25-0400 - CxD-21-crop-preprocess - INFO - Input: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\unprocessed
+2026-07-02 20:23:25-0400 - CxD-21-crop-preprocess - INFO - Output: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\videos
+2026-07-02 20:23:25-0400 - CxD-21-crop-preprocess - INFO - Canny thresholds: 50-150, Margin: 3px, Sample frames: 10
+2026-07-02 20:23:25-0400 - CxD-21-crop-preprocess - INFO - Found 2 video(s) to process
+2026-07-02 20:23:25-0400 - CxD-21-crop-preprocess - INFO - [1/2] Processing: P1D-testdem.mp4
+2026-07-02 20:23:27-0400 - CxD-21-crop-preprocess - INFO -   ✓ Success: P1D-testdem.mp4 (782×556 → 356×548, 30.0 fps, 151 frames)
+2026-07-02 20:23:27-0400 - CxD-21-crop-preprocess - INFO - [2/2] Processing: P2A-testdem.mp4
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO -   ✓ Success: P2A-testdem.mp4 (782×556 → 356×550, 30.0 fps, 151 frames)
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO - 
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO - CROP PREPROCESSING SUMMARY
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO - Total videos processed: 2 success, 0 failed
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO - Output dimensions:
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO -   Min: (356, 548) px
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO -   Max: (356, 550) px
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO - FPS range: 30.0 - 30.0
+2026-07-02 20:23:28-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:35:51-0400 - CxD-21-crop-preprocess - INFO - Starting video crop preprocessing
+2026-07-02 20:35:51-0400 - CxD-21-crop-preprocess - INFO - Input: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\unprocessed
+2026-07-02 20:35:51-0400 - CxD-21-crop-preprocess - INFO - Output: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\videos
+2026-07-02 20:35:51-0400 - CxD-21-crop-preprocess - INFO - Canny thresholds: 50-150, Margin: 3px, Sample frames: 10
+2026-07-02 20:35:51-0400 - CxD-21-crop-preprocess - INFO - Found 2 video(s) to process
+2026-07-02 20:35:51-0400 - CxD-21-crop-preprocess - INFO - [1/2] Processing: P1D-testdem.mp4
+2026-07-02 20:35:52-0400 - CxD-21-crop-preprocess - INFO -   ✓ Success: P1D-testdem.mp4 (782×556 → 356×548, 30.0 fps, 151 frames)
+2026-07-02 20:35:52-0400 - CxD-21-crop-preprocess - INFO - [2/2] Processing: P2A-testdem.mp4
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO -   ✓ Success: P2A-testdem.mp4 (782×556 → 356×550, 30.0 fps, 151 frames)
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO - 
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO - CROP PREPROCESSING SUMMARY
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO - Total videos processed: 2 success, 0 failed
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO - Output dimensions:
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO -   Min: (356, 548) px
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO -   Max: (356, 550) px
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO - FPS range: 30.0 - 30.0
+2026-07-02 20:35:54-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:36:58-0400 - CxD-21-crop-preprocess - INFO - Starting video crop preprocessing
+2026-07-02 20:36:58-0400 - CxD-21-crop-preprocess - INFO - Input: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\unprocessed
+2026-07-02 20:36:58-0400 - CxD-21-crop-preprocess - INFO - Output: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\videos
+2026-07-02 20:36:58-0400 - CxD-21-crop-preprocess - INFO - Canny thresholds: 50-150, Margin: 3px, Sample frames: 10
+2026-07-02 20:36:58-0400 - CxD-21-crop-preprocess - INFO - Found 2 video(s) to process
+2026-07-02 20:36:58-0400 - CxD-21-crop-preprocess - INFO - [1/2] Processing: P1D-testdem.mp4
+2026-07-02 20:37:00-0400 - CxD-21-crop-preprocess - INFO -   ✓ Success: P1D-testdem.mp4 (782×556 → 356×548, 30.0 fps, 151 frames)
+2026-07-02 20:37:00-0400 - CxD-21-crop-preprocess - INFO - [2/2] Processing: P2A-testdem.mp4
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO -   ✓ Success: P2A-testdem.mp4 (782×556 → 356×550, 30.0 fps, 151 frames)
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO - 
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO - CROP PREPROCESSING SUMMARY
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO - Total videos processed: 2 success, 0 failed
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO - Output dimensions:
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO -   Min: (356, 548) px
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO -   Max: (356, 550) px
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO - FPS range: 30.0 - 30.0
+2026-07-02 20:37:01-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-08-11 20:07:59-0400 - CxD-21-crop-preprocess - INFO - Starting video crop preprocessing
+2026-08-11 20:07:59-0400 - CxD-21-crop-preprocess - INFO - Input: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\unprocessed
+2026-08-11 20:07:59-0400 - CxD-21-crop-preprocess - INFO - Output: D:\vsProjTuts\python\TrainRouleauxClassification\rlxRBCs-vid-classifier\data\videos
+2026-08-11 20:07:59-0400 - CxD-21-crop-preprocess - INFO - Canny thresholds: 50-150, Margin: 3px, Sample frames: 10
+2026-08-11 20:07:59-0400 - CxD-21-crop-preprocess - INFO - Found 2 video(s) to process
+2026-08-11 20:07:59-0400 - CxD-21-crop-preprocess - INFO - [1/2] Processing: P1D-testdem.mp4
+2026-08-11 20:08:02-0400 - CxD-21-crop-preprocess - INFO -   ✓ Success: P1D-testdem.mp4 (782×556 → 356×548, 30.0 fps, 151 frames)
+2026-08-11 20:08:02-0400 - CxD-21-crop-preprocess - INFO - [2/2] Processing: P2A-testdem.mp4
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO -   ✓ Success: P2A-testdem.mp4 (782×556 → 356×550, 30.0 fps, 151 frames)
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO - 
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO - CROP PREPROCESSING SUMMARY
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO - Total videos processed: 2 success, 0 failed
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO - Output dimensions:
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO -   Min: (356, 548) px
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO -   Max: (356, 550) px
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO - FPS range: 30.0 - 30.0
+2026-08-11 20:08:04-0400 - CxD-21-crop-preprocess - INFO - ======================================================================
