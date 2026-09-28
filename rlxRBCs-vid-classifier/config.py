@@ -155,7 +155,7 @@ def get_config():   #TODO be sure these aren't duplicated in train.py
         config["momentum"] = 0.9
         config["weight_decay"] = 0
         config["acc_steps"] = 1
-        config["epochs"] = 8
+        config["epochs"] = 42
 
         
     # Convert to a lightweight namespace
